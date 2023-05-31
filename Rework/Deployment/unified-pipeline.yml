@@ -1,0 +1,812 @@
+name: $(DayOfYear)$(Rev:rr)
+
+parameters:
+  - name: generateNewVersion
+    displayName: Generate new service bundle version
+    type: boolean
+    default: true
+
+  - name: releaseType
+    displayName: Release type
+    type: string
+    default: default
+    values:
+    - default
+    - major
+    - minor
+    - hotfix
+
+  - name: components
+    type: object
+    default: 
+    - Name: 'Hibernation'
+      Id: 'hibernation'
+      PipelineId: 1326
+      RunId: -1
+
+    - Name: 'Orchestrator'
+      Id: 'orchestrator'
+      PipelineId: 1316
+      RunId: -1
+
+    - Name: 'PublicApi'
+      Id: 'public-api'
+      PipelineId: 1327
+      RunId: -1
+
+    - Name: 'ExtensionsApi'
+      Id: 'extensions-api'
+      PipelineId: 1259
+      RunId: -1
+
+    - Name: 'FlowsApi'
+      Id: 'flows-api'
+      PipelineId: 1264
+      RunId: -1
+
+    - Name: 'TenantsApi'
+      Id: 'tenants-api'
+      PipelineId: 1322
+      RunId: -1
+
+    - Name: 'TenantsConsumption'
+      Id: 'tenants-consumption'
+      PipelineId: 1323
+      RunId: -1
+
+    - Name: 'TAF'
+      Id: 'taf'
+      PipelineId: 1348
+      RunId: -1
+
+    - Name: 'FlowHistory'
+      Id: 'flow-history'
+      PipelineId: 1295
+      RunId: -1
+      
+    - Name: 'FlowMetrics'
+      Id: 'flow-metrics'
+      PipelineId: 1317
+      RunId: -1
+
+    - Name: 'FlowNotifications'
+      Id: 'flow-notifications'
+      PipelineId: 1319
+      RunId: -1
+    
+    - Name: 'Invitations'
+      Id: 'invitations'
+      PipelineId: 1320
+      RunId: -1
+    
+    - Name: 'MessageHubTrigger'
+      Id: 'mh-trigger'
+      PipelineId: 1329
+      RunId: -1
+    
+    - Name: 'SchedulerTrigger'
+      Id: 'scheduler-trigger'
+      PipelineId: 1301
+      RunId: -1
+    
+    - Name: 'WebhookTrigger'
+      Id: 'webhook-trigger'
+      PipelineId: 1315
+      RunId: -1
+    
+    - Name: 'Portal'
+      Id: 'portal'
+      PipelineId: 1324
+      RunId: -1
+    
+    - Name: 'XsltProcessor'
+      Id: 'xslt-processor'
+      PipelineId: 1343
+      RunId: -1
+
+  - name: actions
+    type: object
+    default: 
+    - Name: 'DaPushText'
+      Id: 'da-push-text'
+      PipelineId: 1275
+      RunId: -1
+      
+    - Name: 'DaQuestion'
+      Id: 'da-question'
+      PipelineId: 1277
+      RunId: -1
+      
+    - Name: 'Email'
+      Id: 'email'
+      PipelineId: 1265
+      RunId: -1
+      
+    - Name: 'EventGridPublish'
+      Id: 'event-grid-publish'
+      PipelineId: 1266
+      RunId: -1
+      
+    - Name: 'HttpRequest'
+      Id: 'http-request'
+      PipelineId: 1278
+      RunId: -1
+      
+    - Name: 'JsonParse'
+      Id: 'json-parse'
+      PipelineId: 1267
+      RunId: -1
+      
+    - Name: 'JsonToXml'
+      Id: 'json-to-xml'
+      PipelineId: 1268
+      RunId: -1
+      
+    - Name: 'MessageHubActor'
+      Id: 'mh-genactor'
+      PipelineId: 1280
+      RunId: -1
+      
+    - Name: 'MessageHubEvent'
+      Id: 'mh-event-action'
+      PipelineId: 1281
+      RunId: -1
+
+    - Name: 'Pause'
+      Id: 'pause'
+      PipelineId: 1363
+      RunId: -1
+      
+    - Name: 'PgpDecrypt'
+      Id: 'pgp-decrypt'
+      PipelineId: 1269
+      RunId: -1
+      
+    - Name: 'PgpEncrypt'
+      Id: 'pgp-encrypt'
+      PipelineId: 1270
+      RunId: -1
+      
+    - Name: 'SftpCreate'
+      Id: 'sftp-create'
+      PipelineId: 1282
+      RunId: -1
+
+    - Name: 'SftpDelete'
+      Id: 'sftp-delete'
+      PipelineId: 1283
+      RunId: -1
+
+    - Name: 'SftpGetContent'
+      Id: 'sftp-get-content'
+      PipelineId: 1285
+      RunId: -1
+      
+    - Name: 'SftpList'
+      Id: 'sftp-list'
+      PipelineId: 1284
+      RunId: -1
+      
+    - Name: 'SignXml'
+      Id: 'sign-xml'
+      PipelineId: 1286
+      RunId: -1
+      
+    - Name: 'Stop'
+      Id: 'stop'
+      PipelineId: 1271
+      RunId: -1
+      
+    - Name: 'Unit4IdResolver'
+      Id: 'u4id-resolver'
+      PipelineId: 1288
+      RunId: -1
+      
+    - Name: 'VerifyXml'
+      Id: 'verify-xml'
+      PipelineId: 1287
+      RunId: -1
+
+    - Name: 'XmlEncrypt'
+      Id: 'xml-encrypt'
+      PipelineId: 1361
+      RunId: -1
+      
+    - Name: 'XmlParse'
+      Id: 'xml-parse'
+      PipelineId: 1272
+      RunId: -1
+
+    - Name: 'Xslt'
+      Id: 'xslt-transformation'
+      PipelineId: 1274
+      RunId: -1
+
+    - Name: 'Xslt3'
+      Id: 'xslt3-transformation'
+      PipelineId: 1340
+      RunId: -1
+
+    - Name: 'XmlDecrypt'
+      Id: 'xml-decrypt'
+      PipelineId: 1360
+      RunId: -1
+    
+    - Name: 'ExecuteTemplatingScript'
+      Id: 'execute-templating-script'
+      PipelineId: 1297
+      RunId: -1
+
+    - Name: 'ForEach'
+      Id: 'for-each'
+      PipelineId: 1298
+      RunId: -1
+
+trigger: none
+
+pr:
+  autoCancel: true
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  - group: 'Unit4 - Service Connections'
+  - group: 'WhiteSource'
+
+resources:
+  repositories:
+  - repository: PeoplePlatformTools
+    type: git
+    name: PeoplePlatform.Tools
+    ref: 'main'
+  - repository: EKFlowHistory
+    type: git
+    name: ExtensionsKit.FlowHistory
+    ref: 'master'
+  - repository: EKPortal
+    type: git
+    name: ExtensionsKit.Portal
+    ref: 'master'
+  - repository: EKFunctions
+    type: git
+    name: ExtensionsKit.Functions
+    ref: 'master'
+  - repository: EKTenants
+    type: git
+    name: ExtensionKit.TenantDomain
+    ref: 'main'
+  - repository: EKHibernation
+    type: git
+    name: ExtensionKit.HibernationService
+    ref: 'master'
+  - repository: EKOrchestrator
+    type: git
+    name: ExtensionsKit.Orchestrator
+    ref: 'master'
+  - repository: EKPublicAPI
+    type: git
+    name: ExtensionsKit.API
+    ref: 'master'
+  - repository: EKExtensions
+    type: git
+    name: ExtensionKit.Extensions
+    ref: 'master'
+  - repository: EKAutotests
+    type: git
+    name: ExtensionKit.Autotests
+    ref: 'master'
+  
+stages:
+
+    # GET ARTIFACTS
+
+    - template: Stages/all.artifacts.yml
+      parameters:
+        Components: ${{ parameters.components }}
+        Actions: ${{ parameters.actions }}
+        GenerateNewVersion: ${{ parameters.generateNewVersion }}
+        ReleaseType: ${{ parameters.releaseType }}
+
+    # DEV
+
+    - template: Stages/environment.common.yml
+      parameters:
+        EnvironmentName: 'dev'
+        ServiceName: 'u4ek-dev'
+        ServiceConnection: $(PeoplePlatformDevelopment)
+        DiscoServiceConnection: $(PeoplePlatformDevelopment)
+        Dependency: 'GetArtifacts'
+        
+    - template: Stages/all.components.yml
+      parameters:
+        EnvironmentName: 'dev'
+        ServiceConnection: $(PeoplePlatformDevelopment)
+        Dependency: 'Infrastructure_dev'
+
+    - template: Stages/health.yml
+      parameters:
+        EnvironmentName: 'dev'
+        ServiceConnection: $(PeoplePlatformDevelopment)
+        Dependency: 'Components_dev'
+
+    # QA
+
+    - template: Stages/environment.common.yml
+      parameters:
+        EnvironmentName: 'qa'
+        ServiceName: 'u4ek-qa'
+        ServiceConnection: $(PeoplePlatformDevelopment)
+        DiscoServiceConnection: $(PeoplePlatformDevelopment)
+        Dependency: 'Health_dev'
+
+    - template: Stages/all.components.yml
+      parameters:
+        EnvironmentName: 'qa'
+        ServiceConnection: $(PeoplePlatformDevelopment)
+        Dependency: 'Infrastructure_qa'
+
+    - template: Stages/health.yml
+      parameters:
+        EnvironmentName: 'qa'
+        ServiceConnection: $(PeoplePlatformDevelopment)
+        Dependency: 'Components_qa'
+
+    # SANDBOX
+
+    - template: Stages/environment.common.yml
+      parameters:
+        EnvironmentName: 'sandbox'
+        ServiceName: 'u4ek-sandbox'
+        ServiceConnection: $(PeoplePlatformDevelopment)
+        DiscoServiceConnection: $(PeoplePlatformDevelopment)
+        Dependency: 'Health_qa'
+
+    - template: Stages/all.components.yml
+      parameters:
+        EnvironmentName: 'sandbox'
+        ServiceConnection: $(PeoplePlatformDevelopment)
+        InstallContrast: true
+        Dependency: 'Infrastructure_sandbox'
+
+    - template: Stages/health.yml
+      parameters:
+        EnvironmentName: 'sandbox'
+        ServiceConnection: $(PeoplePlatformDevelopment)
+        Dependency: 'Components_sandbox'
+
+    # LAB
+
+    - template: Stages/environment.common.yml
+      parameters:
+        EnvironmentName: "lab"
+        ServiceName: "t-eun-ek1"
+        ServiceConnection: $(CloudOpsLabMicroservices)
+        DiscoServiceConnection: $(DiscoCloudOpsLabMicroservices)
+        Dependency: "Health_sandbox"
+
+    - template: Stages/all.components.yml
+      parameters:
+        EnvironmentName: "lab"
+        ServiceConnection: $(CloudOpsLabMicroservices)
+        Dependency: "Infrastructure_lab"
+
+    - template: Stages/traffic.manager.yml
+      parameters:
+        EnvironmentName: "lab"
+        ServiceConnection: $(CloudOpsLabMicroservices)
+        Dependency: "Components_lab"
+
+    - template: Stages/health.yml
+      parameters:
+        EnvironmentName: "lab"
+        ServiceConnection: $(CloudOpsLabMicroservices)
+        Dependency: "TrafficManager_lab"
+
+      # IA (Pre-sales)
+
+    - template: Stages/environment.common.yml
+      parameters:
+        EnvironmentName: 'ia'
+        ServiceName: 'u4iaek'
+        ServiceConnection: 'Global-Presales-Demo-U4ia-RM'
+        Dependency: 'Health_sandbox'
+
+    - template: Stages/all.components.yml
+      parameters:
+        EnvironmentName: 'ia'
+        ServiceConnection: 'Global-Presales-Demo-U4ia-RM'
+        InstallContrast: true
+        Dependency: 'Infrastructure_ia'
+
+    # ASG PREVIEW
+
+    - template: Stages/environment.common.yml
+      parameters:
+        EnvironmentName: "AsgPreview"
+        ServiceName: "s-asg-ek1-preview"
+        ServiceConnection: $(CloudOpsProdMicroservices)
+        DiscoServiceConnection: $(DiscoCloudOpsProdMicroservices)
+        Dependency: "Health_lab"
+
+    - template: Stages/all.components.yml
+      parameters:
+        EnvironmentName: "AsgPreview"
+        ServiceConnection: $(CloudOpsProdMicroservices)
+        Dependency: "Infrastructure_AsgPreview"
+
+    - template: Stages/traffic.manager.yml
+      parameters:
+        EnvironmentName: "AsgPreview"
+        ServiceConnection: $(CloudOpsProdMicroservices)
+        Dependency: "Components_AsgPreview"
+
+    - template: Stages/health.yml
+      parameters:
+        EnvironmentName: "AsgPreview"
+        ServiceConnection: $(CloudOpsProdMicroservices)
+        Dependency: "TrafficManager_AsgPreview"
+
+    # AUS PREVIEW
+
+    - template: Stages/environment.common.yml
+      parameters:
+        EnvironmentName: "AusPreview"
+        ServiceName: "s-aus-ek1-preview"
+        ServiceConnection: $(CloudOpsProdMicroservices)
+        DiscoServiceConnection: $(DiscoCloudOpsProdMicroservices)
+        Dependency: "Health_lab"
+
+    - template: Stages/all.components.yml
+      parameters:
+        EnvironmentName: "AusPreview"
+        ServiceConnection: $(CloudOpsProdMicroservices)
+        Dependency: "Infrastructure_AusPreview"
+
+    - template: Stages/traffic.manager.yml
+      parameters:
+        EnvironmentName: "AusPreview"
+        ServiceConnection: $(CloudOpsProdMicroservices)
+        Dependency: "Components_AusPreview"
+
+    - template: Stages/health.yml
+      parameters:
+        EnvironmentName: "AusPreview"
+        ServiceConnection: $(CloudOpsProdMicroservices)
+        Dependency: "TrafficManager_AusPreview"
+
+    # CAE PREVIEW
+
+    - template: Stages/environment.common.yml
+      parameters:
+        EnvironmentName: "CaePreview"
+        ServiceName: "s-cae-ek1-preview"
+        ServiceConnection: $(CloudOpsProdMicroservices)
+        DiscoServiceConnection: $(DiscoCloudOpsProdMicroservices)
+        Dependency: "Health_lab"
+
+    - template: Stages/all.components.yml
+      parameters:
+        EnvironmentName: "CaePreview"
+        ServiceConnection: $(CloudOpsProdMicroservices)
+        Dependency: "Infrastructure_CaePreview"
+
+    - template: Stages/traffic.manager.yml
+      parameters:
+        EnvironmentName: "CaePreview"
+        ServiceConnection: $(CloudOpsProdMicroservices)
+        Dependency: "Components_CaePreview"
+
+    - template: Stages/health.yml
+      parameters:
+        EnvironmentName: "CaePreview"
+        ServiceConnection: $(CloudOpsProdMicroservices)
+        Dependency: "TrafficManager_CaePreview"
+
+    # EUN PREVIEW
+
+    - template: Stages/environment.common.yml
+      parameters:
+        EnvironmentName: "EunPreview"
+        ServiceName: "s-eun-ek1-preview"
+        ServiceConnection: $(CloudOpsProdMicroservices)
+        DiscoServiceConnection: $(DiscoCloudOpsProdMicroservices)
+        Dependency: "Health_lab"
+
+    - template: Stages/all.components.yml
+      parameters:
+        EnvironmentName: "EunPreview"
+        ServiceConnection: $(CloudOpsProdMicroservices)
+        Dependency: "Infrastructure_EunPreview"
+
+    - template: Stages/traffic.manager.yml
+      parameters:
+        EnvironmentName: "EunPreview"
+        ServiceConnection: $(CloudOpsProdMicroservices)
+        Dependency: "Components_EunPreview"
+
+    - template: Stages/health.yml
+      parameters:
+        EnvironmentName: "EunPreview"
+        ServiceConnection: $(CloudOpsProdMicroservices)
+        Dependency: "TrafficManager_EunPreview"
+
+    # NOE PREVIEW
+
+    - template: Stages/environment.common.yml
+      parameters:
+        EnvironmentName: "NoePreview"
+        ServiceName: "s-noe-ek1-preview"
+        ServiceConnection: $(CloudOpsProdMicroservices)
+        DiscoServiceConnection: $(DiscoCloudOpsProdMicroservices)
+        Dependency: "Health_lab"
+
+    - template: Stages/all.components.yml
+      parameters:
+        EnvironmentName: "NoePreview"
+        ServiceConnection: $(CloudOpsProdMicroservices)
+        Dependency: "Infrastructure_NoePreview"
+
+    - template: Stages/traffic.manager.yml
+      parameters:
+        EnvironmentName: "NoePreview"
+        ServiceConnection: $(CloudOpsProdMicroservices)
+        Dependency: "Components_NoePreview"
+
+    - template: Stages/health.yml
+      parameters:
+        EnvironmentName: "NoePreview"
+        ServiceConnection: $(CloudOpsProdMicroservices)
+        Dependency: "TrafficManager_NoePreview"
+
+    # UKS PREVIEW
+
+    - template: Stages/environment.common.yml
+      parameters:
+        EnvironmentName: "UksPreview"
+        ServiceName: "s-uks-ek1-preview"
+        ServiceConnection: $(CloudOpsProdMicroservices)
+        DiscoServiceConnection: $(DiscoCloudOpsProdMicroservices)
+        Dependency: "Health_lab"
+
+    - template: Stages/all.components.yml
+      parameters:
+        EnvironmentName: "UksPreview"
+        ServiceConnection: $(CloudOpsProdMicroservices)
+        Dependency: "Infrastructure_UksPreview"
+
+    - template: Stages/traffic.manager.yml
+      parameters:
+        EnvironmentName: "UksPreview"
+        ServiceConnection: $(CloudOpsProdMicroservices)
+        Dependency: "Components_UksPreview"
+
+    - template: Stages/health.yml
+      parameters:
+        EnvironmentName: "UksPreview"
+        ServiceConnection: $(CloudOpsProdMicroservices)
+        Dependency: "TrafficManager_UksPreview"
+
+    # USS PREVIEW
+
+    - template: Stages/environment.common.yml
+      parameters:
+        EnvironmentName: "UssPreview"
+        ServiceName: "s-uss-ek1-preview"
+        ServiceConnection: $(CloudOpsProdMicroservices)
+        DiscoServiceConnection: $(DiscoCloudOpsProdMicroservices)
+        Dependency: "Health_lab"
+
+    - template: Stages/all.components.yml
+      parameters:
+        EnvironmentName: "UssPreview"
+        ServiceConnection: $(CloudOpsProdMicroservices)
+        Dependency: "Infrastructure_UssPreview"
+
+    - template: Stages/traffic.manager.yml
+      parameters:
+        EnvironmentName: "UssPreview"
+        ServiceConnection: $(CloudOpsProdMicroservices)
+        Dependency: "Components_UssPreview"
+
+    - template: Stages/health.yml
+      parameters:
+        EnvironmentName: "UssPreview"
+        ServiceConnection: $(CloudOpsProdMicroservices)
+        Dependency: "TrafficManager_UssPreview"
+
+    # ASG PRODUCTION
+
+    - template: Stages/environment.common.yml
+      parameters:
+        EnvironmentName: "AsgProduction"
+        ServiceName: "s-asg-ek1"
+        ServiceConnection: $(CloudOpsProdMicroservices)
+        DiscoServiceConnection: $(DiscoCloudOpsProdMicroservices)
+        Dependency: "Health_AsgPreview"
+
+    - template: Stages/all.components.yml
+      parameters:
+        EnvironmentName: "AsgProduction"
+        ServiceConnection: $(CloudOpsProdMicroservices)
+        Dependency: "Infrastructure_AsgProduction"
+
+    - template: Stages/traffic.manager.yml
+      parameters:
+        EnvironmentName: "AsgProduction"
+        ServiceConnection: $(CloudOpsProdMicroservices)
+        Dependency: "Components_AsgProduction"
+
+    - template: Stages/health.yml
+      parameters:
+        EnvironmentName: "AsgProduction"
+        ServiceConnection: $(CloudOpsProdMicroservices)
+        Dependency: "TrafficManager_AsgProduction"
+
+    # AUS PRODUCTION  
+
+    - template: Stages/environment.common.yml
+      parameters:
+        EnvironmentName: "AusProduction"
+        ServiceName: "s-aus-ek1"
+        ServiceConnection: $(CloudOpsProdMicroservices)
+        DiscoServiceConnection: $(DiscoCloudOpsProdMicroservices)
+        Dependency: "Health_AusPreview"
+
+    - template: Stages/all.components.yml
+      parameters:
+        EnvironmentName: "AusProduction"
+        ServiceConnection: $(CloudOpsProdMicroservices)
+        Dependency: "Infrastructure_AusProduction"
+
+    - template: Stages/traffic.manager.yml
+      parameters:
+        EnvironmentName: "AusProduction"
+        ServiceConnection: $(CloudOpsProdMicroservices)
+        Dependency: "Components_AusProduction"
+
+    - template: Stages/health.yml
+      parameters:
+        EnvironmentName: "AusProduction"
+        ServiceConnection: $(CloudOpsProdMicroservices)
+        Dependency: "TrafficManager_AusProduction"
+
+    # CAE PRODUCTION
+
+    - template: Stages/environment.common.yml
+      parameters:
+        EnvironmentName: "CaeProduction"
+        ServiceName: "s-cae-ek1"
+        ServiceConnection: $(CloudOpsProdMicroservices)
+        DiscoServiceConnection: $(DiscoCloudOpsProdMicroservices)
+        Dependency: "Health_CaePreview"
+
+    - template: Stages/all.components.yml
+      parameters:
+        EnvironmentName: "CaeProduction"
+        ServiceConnection: $(CloudOpsProdMicroservices)
+        Dependency: "Infrastructure_CaeProduction"
+
+    - template: Stages/traffic.manager.yml
+      parameters:
+        EnvironmentName: "CaeProduction"
+        ServiceConnection: $(CloudOpsProdMicroservices)
+        Dependency: "Components_CaeProduction"
+
+    - template: Stages/health.yml
+      parameters:
+        EnvironmentName: "CaeProduction"
+        ServiceConnection: $(CloudOpsProdMicroservices)
+        Dependency: "TrafficManager_CaeProduction"
+
+    # EUN PRODUCTION
+
+    - template: Stages/environment.common.yml
+      parameters:
+        EnvironmentName: "EunProduction"
+        ServiceName: "s-eun-ek1"
+        ServiceConnection: $(CloudOpsProdMicroservices)
+        DiscoServiceConnection: $(DiscoCloudOpsProdMicroservices)
+        Dependency: "Health_EunPreview"
+
+    - template: Stages/all.components.yml
+      parameters:
+        EnvironmentName: "EunProduction"
+        ServiceConnection: $(CloudOpsProdMicroservices)
+        Dependency: "Infrastructure_EunProduction"
+
+    - template: Stages/traffic.manager.yml
+      parameters:
+        EnvironmentName: "EunProduction"
+        ServiceConnection: $(CloudOpsProdMicroservices)
+        Dependency: "Components_EunProduction"
+
+    - template: Stages/health.yml
+      parameters:
+        EnvironmentName: "EunProduction"
+        ServiceConnection: $(CloudOpsProdMicroservices)
+        Dependency: "TrafficManager_EunProduction"
+
+    # NOE PRODUCTION
+
+    - template: Stages/environment.common.yml
+      parameters:
+        EnvironmentName: "NoeProduction"
+        ServiceName: "s-noe-ek1"
+        ServiceConnection: $(CloudOpsProdMicroservices)
+        DiscoServiceConnection: $(DiscoCloudOpsProdMicroservices)
+        Dependency: "Health_NoePreview"
+
+    - template: Stages/all.components.yml
+      parameters:
+        EnvironmentName: "NoeProduction"
+        ServiceConnection: $(CloudOpsProdMicroservices)
+        Dependency: "Infrastructure_NoeProduction"
+
+    - template: Stages/traffic.manager.yml
+      parameters:
+        EnvironmentName: "NoeProduction"
+        ServiceConnection: $(CloudOpsProdMicroservices)
+        Dependency: "Components_NoeProduction"
+
+    - template: Stages/health.yml
+      parameters:
+        EnvironmentName: "NoeProduction"
+        ServiceConnection: $(CloudOpsProdMicroservices)
+        Dependency: "TrafficManager_NoeProduction"
+
+    # UKS PRODUCTION
+
+    - template: Stages/environment.common.yml
+      parameters:
+        EnvironmentName: "UksProduction"
+        ServiceName: "s-uks-ek1"
+        ServiceConnection: $(CloudOpsProdMicroservices)
+        DiscoServiceConnection: $(DiscoCloudOpsProdMicroservices)
+        Dependency: "Health_UksPreview"
+
+    - template: Stages/all.components.yml
+      parameters:
+        EnvironmentName: "UksProduction"
+        ServiceConnection: $(CloudOpsProdMicroservices)
+        Dependency: "Infrastructure_UksProduction"
+
+    - template: Stages/traffic.manager.yml
+      parameters:
+        EnvironmentName: "UksProduction"
+        ServiceConnection: $(CloudOpsProdMicroservices)
+        Dependency: "Components_UksProduction"
+
+    - template: Stages/health.yml
+      parameters:
+        EnvironmentName: "UksProduction"
+        ServiceConnection: $(CloudOpsProdMicroservices)
+        Dependency: "TrafficManager_UksProduction"
+
+    # USS PRODUCTION
+
+    - template: Stages/environment.common.yml
+      parameters:
+        EnvironmentName: "UssProduction"
+        ServiceName: "s-uss-ek1"
+        ServiceConnection: $(CloudOpsProdMicroservices)
+        DiscoServiceConnection: $(DiscoCloudOpsProdMicroservices)
+        Dependency: "Health_UssPreview"
+
+    - template: Stages/all.components.yml
+      parameters:
+        EnvironmentName: "UssProduction"
+        ServiceConnection: $(CloudOpsProdMicroservices)
+        Dependency: "Infrastructure_UssProduction"
+
+    - template: Stages/traffic.manager.yml
+      parameters:
+        EnvironmentName: "UssProduction"
+        ServiceConnection: $(CloudOpsProdMicroservices)
+        Dependency: "Components_UssProduction"
+
+    - template: Stages/health.yml
+      parameters:
+        EnvironmentName: "UssProduction"
+        ServiceConnection: $(CloudOpsProdMicroservices)
+        Dependency: "TrafficManager_UssProduction"

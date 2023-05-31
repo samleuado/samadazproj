@@ -1,0 +1,296 @@
+parameters:
+  - name: environmentName
+  - name: serviceConnection
+  - name: installContrast
+    default: false
+  - name: dependency
+  - name: actions
+    type: object
+    default: 
+    - id: 'da-push-text'
+      name: 'DaPushText'
+      version: 1
+      folder:  'Actions/DaPush/Text'
+      bicep: 'da-push-action-template.bicep'
+      isNoop: false
+      isHibernable: false
+
+    - id: 'da-question'
+      name: 'DaQuestion'
+      version: 1
+      bicep: 'da-question-action-template.bicep'
+      isNoop: false
+      isHibernable: true
+
+    - id: 'email'
+      name: 'Email'
+      version: 1
+      bicep: 'email-action-template.bicep'
+      isNoop: false
+      isHibernable: false
+
+    - id: 'event-grid-publish'
+      name: 'EventGridPublish'
+      version: 1
+      bicep: 'base-action-template.bicep'
+      isNoop: false
+      isHibernable: false
+
+    - id: 'http-request'
+      name: 'HttpRequest'
+      version: 1
+      bicep: 'http-request-action-template.bicep'
+      isNoop: false
+      isHibernable: false
+
+    - id: 'json-parse'
+      name: 'JsonParse'
+      version: 2
+      bicep: 'base-action-template.bicep'
+      isNoop: false
+      isHibernable: false
+
+    - id: 'json-to-xml'
+      name: 'JsonToXml'
+      version: 1
+      bicep: 'base-action-template.bicep'
+      isNoop: false
+      isHibernable: false
+
+    - id: 'mh-genactor'
+      name: 'MessageHubActor'
+      version: 1
+      bicep: 'mh-actor-action-template.bicep'
+      isNoop: false
+      isHibernable: true
+
+    - id: 'mh-event-action'
+      name: 'MessageHubEvent'
+      version: 1
+      bicep: 'mh-event-action-template.bicep'
+      isNoop: false
+      isHibernable: false
+
+    - id: 'pause'
+      name: 'Pause'
+      version: 1
+      bicep: 'pause-action-template.bicep'
+      isNoop: false
+      isHibernable: true
+
+    - id: 'pgp-decrypt'
+      name: 'PgpDecrypt'
+      version: 1
+      bicep: 'base-action-template.bicep'
+      isNoop: false
+      isHibernable: false
+
+    - id: 'pgp-encrypt'
+      name: 'PgpEncrypt'
+      version: 1
+      bicep: 'base-action-template.bicep'
+      isNoop: false
+      isHibernable: false
+
+    - id: 'sftp-create'
+      name: 'SftpCreate'
+      version: 1
+      folder:  'Actions/Sftp/Create'
+      bicep: 'sftp-action-template.bicep'
+      isNoop: false
+      isHibernable: false
+
+    - id: 'sftp-delete'
+      name: 'SftpDelete'
+      version: 1
+      folder:  'Actions/Sftp/Delete'
+      bicep: 'sftp-action-template.bicep'
+      isNoop: false
+      isHibernable: false
+
+    - id: 'sftp-get-content'
+      name: 'SftpGetContent'
+      version: 1
+      folder:  'Actions/Sftp/GetContent'
+      bicep: 'sftp-action-template.bicep'
+      isNoop: false
+      isHibernable: false
+
+    - id: 'sftp-list'
+      name: 'SftpList'
+      version: 1
+      folder:  'Actions/Sftp/List'
+      bicep: 'sftp-action-template.bicep'
+      isNoop: false
+      isHibernable: false
+
+    - id: 'sign-xml'
+      name: 'SignXml'
+      version: 1
+      bicep: 'certificate-action-template.bicep'
+      isNoop: false
+      isHibernable: false
+
+    - id: 'stop'
+      name: 'Stop'
+      version: 1
+      bicep: 'base-action-template.bicep'
+      isNoop: false
+      isHibernable: false
+
+    - id: 'u4id-resolver'
+      name: 'Unit4IdResolver'
+      version: 1
+      bicep: 'u4id-resolver-action-template.bicep'
+      isNoop: false
+      isHibernable: false
+
+    - id: 'verify-xml'
+      name: 'VerifyXml'
+      version: 1
+      bicep: 'certificate-action-template.bicep'
+      isNoop: false
+      isHibernable: false
+
+    - id: 'xml-encrypt'
+      name: 'XmlEncrypt'
+      version: 1
+      bicep: 'certificate-action-template.bicep'
+      isNoop: false
+      isHibernable: false
+
+    - id: 'xml-parse'
+      name: 'XmlParse'
+      version: 1
+      bicep: 'base-action-template.bicep'
+      isNoop: false
+      isHibernable: false
+
+    - id: 'xslt-transformation'
+      name: 'Xslt'
+      version: 1
+      bicep: 'base-action-template.bicep'
+      isNoop: false
+      isHibernable: false
+
+    - id: 'xslt3-transformation'
+      name: 'Xslt3'
+      version: 1
+      bicep: 'xslt3-function-app-template.bicep'
+      isNoop: false
+      isHibernable: false
+
+    - id: 'xml-decrypt'
+      name: 'XmlDecrypt'
+      version: 1
+      bicep: 'certificate-action-template.bicep'
+      isNoop: false
+      isHibernable: false
+      
+    - id: 'execute-templating-script'
+      name: 'ExecuteTemplatingScript'
+      version: 1
+      folder: 'ControlActions/ExecuteTemplatingScript'
+      bicep: 'base-action-template.bicep'
+      isNoop: true
+      isHibernable: false
+
+    - id: 'for-each'
+      name: 'ForEach'
+      version: 1
+      folder: 'ControlActions/ForEach'
+      bicep: 'base-action-template.bicep'
+      isNoop: false
+      isHibernable: false
+
+stages:
+  - stage: 'Components_${{ parameters.EnvironmentName }}'
+    displayName: '${{ parameters.EnvironmentName }} - Components'
+    ${{ if ne(parameters.Dependency, '')}}:
+      dependsOn: 
+      - GetArtifacts
+      - ${{ parameters.Dependency }} 
+    ${{ if ne(parameters.Dependency, '')}}:
+      condition: succeeded('${{ parameters.Dependency }}')
+
+    variables:
+      - group: 'People Platform - Contrast Assess'
+      - template: ../Resources/Variables/vars.${{ parameters.EnvironmentName }}.yml
+      - name: serviceBundleVersion
+        value: $[ stageDependencies.GetArtifacts.SetVersion.outputs['SetVersion.serviceBundleVersion'] ]
+
+    jobs:
+      - template: ../Jobs/deploy.flow-history.yml
+        parameters:    
+          ServiceConnection: ${{ parameters.ServiceConnection }}
+          ApiServiceName: '$(serviceName)-flowHistory'
+          FunctionsServiceName: '$(serviceName)-functions-flowhistory'
+          WriterServiceName: '$(serviceName)-flowhistory-writer-function'
+          DataCleanerServiceName: '$(serviceName)-flowhistory-data-cleaner-function'
+          InstallContrast: ${{ parameters.InstallContrast }}
+
+      - template: ../Jobs/deploy.portal.yml
+        parameters:    
+          ServiceConnection: ${{ parameters.ServiceConnection }}
+          AppServiceName: '$(serviceName)-portal'
+          InstallContrast: ${{ parameters.InstallContrast }}
+          
+      - template: ../Jobs/deploy.functions.yml
+        parameters:    
+          ServiceConnection: ${{ parameters.ServiceConnection }}
+          FlowMetricsAppServiceName: '$(serviceName)-functions-dotnet'
+          FlowNotificationsAppServiceName: '$(serviceName)-flow-notification-function'
+          InvitationsAppServiceName: '$(serviceName)-invitation-sender'
+          XsltProcessorAppServiceName: '$(serviceName)-functions-xslt'
+
+      - template: ../Jobs/deploy.flow-notification-subscription.yml
+        parameters:    
+          ServiceConnection: ${{ parameters.ServiceConnection }}
+          AppServiceName: '$(serviceName)-flow-notification-function'
+          Dependency: 'DeployFlowNotifications'
+         
+      - template: ../Jobs/deploy.tenants.yml
+        parameters:    
+          ServiceConnection: ${{ parameters.ServiceConnection }}
+          TenantsAppServiceName: '$(serviceName)-tenants'
+          TenantsConsumptionUpdaterAppServiceName: '$(serviceName)-tenant-consumption-updater'
+          TafAppServiceName: '$(serviceName)-taf'
+          InstallContrast: ${{ parameters.InstallContrast }}
+                  
+      - template: ../Jobs/deploy.orchestrator.yml
+        parameters:    
+          ServiceConnection: ${{ parameters.ServiceConnection }}
+          AppServiceName: '$(serviceName)-orchestrator-functions'
+         
+      - template: ../Jobs/deploy.apis.yml
+        parameters:    
+          ServiceConnection: ${{ parameters.ServiceConnection }}
+          FlowsApiAppServiceName: '$(serviceName)-flows'
+          ExtensionsApiAppServiceName: '$(serviceName)-extensions'
+          HibernationApiAppServiceName: '$(serviceName)-hibernation'
+          HibernationFunctionName: '$(serviceName)-hibernation-ttl-function'
+          PublicApiAppServiceName: '$(serviceName)-api'
+          InstallContrast: ${{ parameters.InstallContrast }}
+ 
+      - template: ../Jobs/deploy.triggers.yml
+        parameters:    
+          ServiceConnection: ${{ parameters.ServiceConnection }}
+          MessageHubTriggerAppServiceName: '$(serviceName)-trigger-message-hub'
+          SchedulerTriggerAppServiceName: '$(serviceName)-trigger-scheduler-eg'
+          WebhookTriggerAppServiceName: '$(serviceName)-trigger-http-webhook-v2'
+
+      - template: ../Jobs/deploy.triggers-subscription.yml
+        parameters:    
+          ServiceConnection: ${{ parameters.ServiceConnection }}
+          MessageHubTriggerAppServiceName: '$(serviceName)-trigger-message-hub'
+          MessageHubTriggerDependency: 'DeployMHTrigger'
+          SchedulerTriggerAppServiceName: '$(serviceName)-trigger-scheduler-eg'
+          SchedulerTriggerDependency: 'DeploySchedulerTrigger'
+          WebhookTriggerAppServiceName: '$(serviceName)-trigger-http-webhook-v2'
+          WebhookTriggerDependency: 'DeployWebhookV2Trigger'
+
+      - template: ../Jobs/deploy.actions.yml
+        parameters: 
+          ServiceConnection: ${{ parameters.ServiceConnection }}
+          Actions: ${{ parameters.Actions }}
+          Dependency: DeployExtensionsAPI

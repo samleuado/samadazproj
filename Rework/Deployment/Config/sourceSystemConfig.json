@@ -1,0 +1,384 @@
+{
+    "$schema": "./sourceSystemConfig.schema.json",
+    "version": "1.0.0",
+    "dictionary": {
+        "stage": "",
+        "version": "",
+        "region": "",
+        "extensionsApiUrl": "",
+        "flowsApiUrl": "",
+        "tenantsApiUrl": "",
+        "publicApiUrl": "",
+        "flowHistoryUrl": "",
+        "flowNotificationUrl": "",
+        "hibernationUrl": "",
+        "orchestratorUrl": "",
+        "portalUrl": "",
+        "tafUrl": "",
+        "tenantConsumptionUpdaterUrl": "",
+        "xsltProcessorUrl": "",
+        "mhTriggerUrl": "",
+        "schedulerTriggerUrl": "",
+        "webhookTriggerUrl": "",
+        "actionUrlPrefix": "",
+        "actionUrlSuffix": ""
+    },
+    "disco": {
+        "sourceSystemTypes": [
+            {
+                "code": "u4ek",
+                "name": "Unit4 Extension Kit",
+                "description": "The Unit4 Extension Kit (U4EK) is a toolkit for authoring and deploying new capabilities as micro-services, a cloud hosting model, and a declarative way to connect new and existing capabilities together to create new functionality.",
+                "deploymentType": "Regional",
+                "documentationUri": "https://thehub.unit4.com/docs/extensions-kit/Latest/docs:index.md",
+                "pipelineUri": "https://dev.azure.com/unit4-peopleplatform/People%20Platform/_build?definitionId=1341&_a=summary",
+                "validServiceTypes": [
+                    "extensions-api",
+                    "flows-api",
+                    "tenants-api",
+                    "public-api",
+                    "flow-history",
+                    "flow-notification",
+                    "hibernation",
+                    "orchestrator",
+                    "portal",
+                    "taf",
+                    "tenant-consumption-updater",
+                    "xslt-processor",
+                    "mh-trigger",
+                    "scheduler-trigger",
+                    "webhook-trigger",
+                    "da-push-text-action",
+                    "da-question-action",
+                    "email-action",
+                    "event-grid-publish-action",
+                    "for-each-action",
+                    "http-request-action",
+                    "json-parse-action",
+                    "json-to-xml-action",
+                    "mh-event-action",
+                    "mh-genactor-action",
+                    "pause-action",
+                    "pgp-decrypt-action",
+                    "pgp-encrypt-action",
+                    "sftp-create-action",
+                    "sftp-delete-action",
+                    "sftp-get-content-action",
+                    "sftp-list-action",
+                    "sign-xml-action",
+                    "stop-action",
+                    "u4id-resolver-action",
+                    "verify-xml-action",
+                    "xml-parse-action",
+                    "xslt-transformation-action",
+                    "xslt3-transformation-action"
+                ]
+            }
+        ],
+        "sourceSystems": [
+            {
+                "name": "u4ek-$$stage$$-$$region$$",
+                "type": "u4ek",
+                "stage": "$$stage$$",
+                "version": "$$version$$",
+                "region": "$$region$$",
+                "dependencies": [
+                    "u4ids",
+                    "u4amg",
+                    "u4mhu"
+                ],
+                "activationFunction": {
+                    "type": "Http",
+                    "configuration": "{\"Uri\":\"$$tafUrl$$/api/TenantActivationFunction\"}"
+                },
+                "activationParameters": [
+                    {
+                        "dataType": "string",
+                        "name": "ShortName",
+                        "label": "Tenant short name"
+                    },
+                    {
+                        "dataType": "string",
+                        "name": "LogoUrl",
+                        "label": "Tenant logo Url"
+                    }
+                ],
+                "services": [
+                    {
+                        "name": "Extensions API",
+                        "type": "extensions-api",
+                        "url": "$$extensionsApiUrl$$",
+                        "healthCheck": "$$extensionsApiUrl$$/health",
+                        "version": "$$version$$"
+                    },
+                    {
+                        "name": "Flows API",
+                        "type": "flows-api",
+                        "url": "$$flowsApiUrl$$",
+                        "healthCheck": "$$flowsApiUrl$$/health",
+                        "version": "$$version$$"
+                    },
+                    {
+                        "name": "Tenants API",
+                        "type": "tenants-api",
+                        "url": "$$tenantsApiUrl$$",
+                        "healthCheck": "$$tenantsApiUrl$$/health",
+                        "version": "$$version$$"
+                    },
+                    {
+                        "name": "Public API",
+                        "type": "public-api",
+                        "url": "$$publicApiUrl$$",
+                        "healthCheck": "$$publicApiUrl$$/api/health",
+                        "version": "$$version$$"
+                    },
+                    {
+                        "name": "Flow History",
+                        "type": "flow-history",
+                        "url": "$$flowHistoryUrl$$",
+                        "healthCheck": "$$flowHistoryUrl$$/health",
+                        "version": "$$version$$"
+                    },
+                    {
+                        "name": "Flow Notification",
+                        "type": "flow-notification",
+                        "url": "$$flowNotificationUrl$$",
+                        "healthCheck": "$$flowNotificationUrl$$/api/health",
+                        "version": "$$version$$"
+                    },
+                    {
+                        "name": "Hibernation",
+                        "type": "hibernation",
+                        "url": "$$hibernationUrl$$",
+                        "healthCheck": "$$hibernationUrl$$/health",
+                        "version": "$$version$$"
+                    },
+                    {
+                        "name": "Orchestrator",
+                        "type": "orchestrator",
+                        "url": "$$orchestratorUrl$$",
+                        "healthCheck": "$$orchestratorUrl$$/api/health",
+                        "version": "$$version$$"
+                    },
+                    {
+                        "name": "Portal",
+                        "type": "portal",
+                        "url": "$$portalUrl$$",
+                        "healthCheck": "$$portalUrl$$/health",
+                        "version": "$$version$$"
+                    },
+                    {
+                        "name": "Tenant Activation Function",
+                        "type": "taf",
+                        "url": "$$tafUrl$$",
+                        "healthCheck": "$$tafUrl$$/api/health",
+                        "version": "$$version$$"
+                    },
+                    {
+                        "name": "Tenant Consumption Updater",
+                        "type": "tenant-consumption-updater",
+                        "url": "$$tenantConsumptionUpdaterUrl$$",
+                        "healthCheck": "$$tenantConsumptionUpdaterUrl$$/api/health",
+                        "version": "$$version$$"
+                    },
+                    {
+                        "name": "XSLT Processor",
+                        "type": "xslt-processor",
+                        "url": "$$xsltProcessorUrl$$",
+                        "healthCheck": "$$xsltProcessorUrl$$/api/health",
+                        "version": "$$version$$"
+                    },
+                    {
+                        "name": "MessageHub (Trigger)",
+                        "type": "mh-trigger",
+                        "url": "$$mhTriggerUrl$$",
+                        "healthCheck": "$$mhTriggerUrl$$/health",
+                        "version": "$$version$$"
+                    },
+                    {
+                        "name": "Scheduler (Trigger)",
+                        "type": "scheduler-trigger",
+                        "url": "$$schedulerTriggerUrl$$",
+                        "healthCheck": "$$schedulerTriggerUrl$$/health",
+                        "version": "$$version$$"
+                    },
+                    {
+                        "name": "Webhook (Trigger)",
+                        "type": "Webhook-trigger",
+                        "url": "$$webhookTriggerUrl$$",
+                        "healthCheck": "$$webhookTriggerUrl$$/health",
+                        "version": "$$version$$"
+                    },
+                    {
+                        "name": "DaPushText (Action)",
+                        "type": "da-push-text-action",
+                        "url": "$$actionUrlPrefix$$-da-push-text-$$actionUrlSuffix$$",
+                        "healthCheck": "$$actionUrlPrefix$$-da-push-text-$$actionUrlSuffix$$/api/health",
+                        "version": "$$version$$"
+                    },
+                    {
+                        "name": "DaQuestion (Action)",
+                        "type": "da-question-action",
+                        "url": "$$actionUrlPrefix$$-da-question-$$actionUrlSuffix$$",
+                        "healthCheck": "$$actionUrlPrefix$$-da-question-$$actionUrlSuffix$$/api/health",
+                        "version": "$$version$$"
+                    },
+                    {
+                        "name": "Email (Action)",
+                        "type": "email-action",
+                        "url": "$$actionUrlPrefix$$-email-$$actionUrlSuffix$$",
+                        "healthCheck": "$$actionUrlPrefix$$-email-$$actionUrlSuffix$$/api/health",
+                        "version": "$$version$$"
+                    },
+                    {
+                        "name": "EventGridPublish (Action)",
+                        "type": "event-grid-publish-action",
+                        "url": "$$actionUrlPrefix$$-event-grid-publish-$$actionUrlSuffix$$",
+                        "healthCheck": "$$actionUrlPrefix$$-event-grid-publish-$$actionUrlSuffix$$/api/health",
+                        "version": "$$version$$"
+                    },
+                    {
+                        "name": "ForEach (Action)",
+                        "type": "for-each-action",
+                        "url": "$$actionUrlPrefix$$-for-each-$$actionUrlSuffix$$",
+                        "healthCheck": "$$actionUrlPrefix$$-for-each-$$actionUrlSuffix$$/api/health",
+                        "version": "$$version$$"
+                    },
+                    {
+                        "name": "HttpRequest (Action)",
+                        "type": "http-request-action",
+                        "url": "$$actionUrlPrefix$$-http-request-$$actionUrlSuffix$$",
+                        "healthCheck": "$$actionUrlPrefix$$-http-request-$$actionUrlSuffix$$/api/health",
+                        "version": "$$version$$"
+                    },
+                    {
+                        "name": "JsonParse (Action)",
+                        "type": "json-parse-action",
+                        "url": "$$actionUrlPrefix$$-json-parse-$$actionUrlSuffix$$",
+                        "healthCheck": "$$actionUrlPrefix$$-json-parse-$$actionUrlSuffix$$/api/health",
+                        "version": "$$version$$"
+                    },
+                    {
+                        "name": "JsonToXml (Action)",
+                        "type": "json-to-xml-action",
+                        "url": "$$actionUrlPrefix$$-json-to-xml-$$actionUrlSuffix$$",
+                        "healthCheck": "$$actionUrlPrefix$$-json-to-xml-$$actionUrlSuffix$$/api/health",
+                        "version": "$$version$$"
+                    }, 
+                    {
+                        "name": "MessageHubEvent (Action)",
+                        "type": "mh-event-action",
+                        "url": "$$actionUrlPrefix$$-mh-event-action-$$actionUrlSuffix$$",
+                        "healthCheck": "$$actionUrlPrefix$$-mh-event-action-$$actionUrlSuffix$$/api/health",
+                        "version": "$$version$$"
+                    },
+                    {
+                        "name": "MessageHubActor (Action)",
+                        "type": "mh-genactor-action",
+                        "url": "$$actionUrlPrefix$$-mh-genactor-$$actionUrlSuffix$$",
+                        "healthCheck": "$$actionUrlPrefix$$-mh-genactor-$$actionUrlSuffix$$/api/health",
+                        "version": "$$version$$"
+                    },
+                    {
+                        "name": "Pause (Action)",
+                        "type": "pause-action",
+                        "url": "$$actionUrlPrefix$$-pause-$$actionUrlSuffix$$",
+                        "healthCheck": "$$actionUrlPrefix$$-pause-$$actionUrlSuffix$$/api/health",
+                        "version": "$$version$$"
+                    },
+                    {
+                        "name": "PgpDecrypt (Action)",
+                        "type": "pgp-decrypt-action",
+                        "url": "$$actionUrlPrefix$$-pgp-decrypt-$$actionUrlSuffix$$",
+                        "healthCheck": "$$actionUrlPrefix$$-pgp-decrypt-$$actionUrlSuffix$$/api/health",
+                        "version": "$$version$$"
+                    },
+                    {
+                        "name": "PgpEncrypt (Action)",
+                        "type": "pgp-encrypt-action",
+                        "url": "$$actionUrlPrefix$$-pgp-encrypt-$$actionUrlSuffix$$",
+                        "healthCheck": "$$actionUrlPrefix$$-pgp-encrypt-$$actionUrlSuffix$$/api/health",
+                        "version": "$$version$$"
+                    },
+                    {
+                        "name": "SftpCreate (Action)",
+                        "type": "sftp-create-action",
+                        "url": "$$actionUrlPrefix$$-sftp-create-$$actionUrlSuffix$$",
+                        "healthCheck": "$$actionUrlPrefix$$-sftp-create-$$actionUrlSuffix$$/api/health",
+                        "version": "$$version$$"
+                    },
+                    {
+                        "name": "SftpDelete (Action)",
+                        "type": "sftp-delete-action",
+                        "url": "$$actionUrlPrefix$$-sftp-delete-$$actionUrlSuffix$$",
+                        "healthCheck": "$$actionUrlPrefix$$-sftp-delete-$$actionUrlSuffix$$/api/health",
+                        "version": "$$version$$"
+                    },
+                    {
+                        "name": "SftpGetContent (Action)",
+                        "type": "sftp-get-content-action",
+                        "url": "$$actionUrlPrefix$$-sftp-get-content-$$actionUrlSuffix$$",
+                        "healthCheck": "$$actionUrlPrefix$$-sftp-get-content-$$actionUrlSuffix$$/api/health",
+                        "version": "$$version$$"
+                    },
+                    {
+                        "name": "SftpList (Action)",
+                        "type": "sftp-list-action",
+                        "url": "$$actionUrlPrefix$$-sftp-list-$$actionUrlSuffix$$",
+                        "healthCheck": "$$actionUrlPrefix$$-sftp-list-$$actionUrlSuffix$$/api/health",
+                        "version": "$$version$$"
+                    },
+                    {
+                        "name": "SignXml (Action)",
+                        "type": "sign-xml-action",
+                        "url": "$$actionUrlPrefix$$-sign-xml-$$actionUrlSuffix$$",
+                        "healthCheck": "$$actionUrlPrefix$$-sign-xml-$$actionUrlSuffix$$/api/health",
+                        "version": "$$version$$"
+                    },
+                    {
+                        "name": "Stop (Action)",
+                        "type": "stop-action",
+                        "url": "$$actionUrlPrefix$$-stop-$$actionUrlSuffix$$",
+                        "healthCheck": "$$actionUrlPrefix$$-stop-$$actionUrlSuffix$$/api/health",
+                        "version": "$$version$$"
+                    },
+                    {
+                        "name": "Unit4IdResolver (Action)",
+                        "type": "u4id-resolver-action",
+                        "url": "$$actionUrlPrefix$$-u4id-resolver-$$actionUrlSuffix$$",
+                        "healthCheck": "$$actionUrlPrefix$$-u4id-resolver-$$actionUrlSuffix$$/api/health",
+                        "version": "$$version$$"
+                    },
+                    {
+                        "name": "VerifyXml (Action)",
+                        "type": "verify-xml-action",
+                        "url": "$$actionUrlPrefix$$-verify-xml-$$actionUrlSuffix$$",
+                        "healthCheck": "$$actionUrlPrefix$$-verify-xml-$$actionUrlSuffix$$/api/health",
+                        "version": "$$version$$"
+                    },
+                    {
+                        "name": "XmlParse (Action)",
+                        "type": "xml-parse-action",
+                        "url": "$$actionUrlPrefix$$-xml-parse-$$actionUrlSuffix$$",
+                        "healthCheck": "$$actionUrlPrefix$$-xml-parse-$$actionUrlSuffix$$/api/health",
+                        "version": "$$version$$"
+                    },
+                    {
+                        "name": "XsltTransformation (Action)",
+                        "type": "xslt-transformation-action",
+                        "url": "$$actionUrlPrefix$$-xslt-transformation-$$actionUrlSuffix$$",
+                        "healthCheck": "$$actionUrlPrefix$$-xslt-transformation-$$actionUrlSuffix$$/api/health",
+                        "version": "$$version$$"
+                    },
+                    {
+                        "name": "Xslt3Transformation (Action)",
+                        "type": "xslt3-transformation-action",
+                        "url": "$$actionUrlPrefix$$-xslt3-transformation-$$actionUrlSuffix$$",
+                        "healthCheck": "$$actionUrlPrefix$$-xslt3-transformation-$$actionUrlSuffix$$/api/health",
+                        "version": "$$version$$"
+                    }
+                ]
+            }
+        ]
+    }
+}

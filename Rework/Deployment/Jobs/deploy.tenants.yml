@@ -1,0 +1,130 @@
+parameters:
+  ServiceConnection: ''
+  TenantsAppServiceName: ''
+  TenantsConsumptionUpdaterAppServiceName: ''
+  TafAppServiceName: ''
+  Dependency: ''
+  InstallContrast: false
+
+jobs:
+- job: DeployTenantsAPI
+  displayName: 'Deploy Tenants API'
+  ${{ if ne(parameters.Dependency, '')}}:
+    dependsOn: ${{ parameters.Dependency }} 
+  ${{ if ne(parameters.Dependency, '')}}:
+    condition: succeeded('${{ parameters.Dependency }}')  
+
+  pool: 
+    vmImage: 'ubuntu-latest'
+    
+  variables:
+  - template: DeploymentResources/Resources/Variables/vars.tenants-service.yml@EKTenants
+    parameters:
+      AppServiceName: "${{ parameters.TenantsAppServiceName }}"
+
+  steps:
+    - task: DownloadPipelineArtifact@2
+      displayName: 'Download resources files'
+      inputs:
+        source: 'current'
+        artifact: 'tenants-api-resources'
+        path: '$(Pipeline.Workspace)/resources'
+
+    - task: DownloadPipelineArtifact@2
+      displayName: 'Download services files'
+      inputs:
+        source: 'current'
+        artifact: 'tenants-api-service'
+        path: '$(Pipeline.Workspace)/service'
+
+    - checkout: EKTenants
+      path: 'ExtensionKit.TenantDomain'
+
+    - template: DeploymentResources/Jobs/deploy.component.yml@EKTenants
+      parameters: 
+        ServiceConnection: ${{ parameters.ServiceConnection }}
+        AppServiceName: ${{ parameters.TenantsAppServiceName }}
+        ResourceGroupName: $(resourceGroupName)
+        ResourceGroupLocation: $(location)
+        WorkingDirectory: "$(Pipeline.Workspace)/ExtensionKit.TenantDomain"
+        InstallContrast: '${{ parameters.InstallContrast }}'
+
+- job: DeployTenantsConsumption
+  displayName: 'Deploy Tenants Consumption Updater'
+  ${{ if ne(parameters.Dependency, '')}}:
+    dependsOn: ${{ parameters.Dependency }} 
+  ${{ if ne(parameters.Dependency, '')}}:
+    condition: succeeded('${{ parameters.Dependency }}')  
+
+  pool: 
+    vmImage: 'ubuntu-latest'
+    
+  variables:
+  - template: DeploymentResources/Resources/Variables/vars.tenants-consumption-updater.yml@EKTenants
+    parameters:
+      AppServiceName: "${{ parameters.TenantsConsumptionUpdaterAppServiceName }}"
+
+  steps:
+    - task: DownloadPipelineArtifact@2
+      displayName: 'Download resources files'
+      inputs:
+        source: 'current'
+        artifact: 'tenants-consumption-resources'
+        path: '$(Pipeline.Workspace)/resources'
+
+    - task: DownloadPipelineArtifact@2
+      displayName: 'Download services files'
+      inputs:
+        source: 'current'
+        artifact: 'tenants-consumption-service'
+        path: '$(Pipeline.Workspace)/service'
+
+    - checkout: EKTenants
+      path: 'ExtensionKit.TenantDomain'
+      
+    - template: DeploymentResources/Jobs/deploy.component.yml@EKTenants
+      parameters: 
+        ServiceConnection: ${{ parameters.ServiceConnection }}
+        AppServiceName: ${{ parameters.TenantsConsumptionUpdaterAppServiceName }}
+        ResourceGroupName: $(resourceGroupName)
+        ResourceGroupLocation: $(location)
+
+- job: DeployTAF
+  displayName: 'Deploy TAF'
+  ${{ if ne(parameters.Dependency, '')}}:
+    dependsOn: ${{ parameters.Dependency }} 
+  ${{ if ne(parameters.Dependency, '')}}:
+    condition: succeeded('${{ parameters.Dependency }}')  
+
+  pool: 
+    vmImage: 'ubuntu-latest'
+    
+  variables:
+  - template: DeploymentResources/Resources/Variables/vars.tenant-activation-function.yml@EKTenants
+    parameters:
+      AppServiceName: "${{ parameters.TafAppServiceName }}"
+
+  steps:
+    - task: DownloadPipelineArtifact@2
+      displayName: 'Download resources files'
+      inputs:
+        source: 'current'
+        artifact: 'taf-resources'
+        path: '$(Pipeline.Workspace)/resources'
+
+    - task: DownloadPipelineArtifact@2
+      displayName: 'Download services files'
+      inputs:
+        source: 'current'
+        artifact: 'taf-service'
+        path: '$(Pipeline.Workspace)/service'
+
+    - checkout: EKTenants
+      path: 'ExtensionKit.TenantDomain'
+
+    - template: DeploymentResources/Jobs/deploy.component.yml@EKTenants
+      parameters: 
+        ServiceConnection: ${{ parameters.ServiceConnection }}
+        AppServiceName: ${{ parameters.TafAppServiceName }}
+        ResourceGroupName: $(resourceGroupName)
+        ResourceGroupLocation: $(location)

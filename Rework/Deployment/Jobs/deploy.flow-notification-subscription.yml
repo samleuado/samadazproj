@@ -1,0 +1,27 @@
+parameters:
+  ServiceConnection: ''
+  AppServiceName: ''
+  Dependency: ''
+
+jobs:
+- job: DeployFlowNotificationsSubscription
+  displayName: 'Deploy Flow Notifications Subscription'
+  ${{ if ne(parameters.Dependency, '')}}:
+    dependsOn: ${{ parameters.Dependency }} 
+  ${{ if ne(parameters.Dependency, '')}}:
+    condition: succeeded('${{ parameters.Dependency }}')  
+
+  steps:
+    - task: DownloadPipelineArtifact@2
+      displayName: 'Download resources files'
+      inputs:
+        source: 'current'
+        artifact: 'flow-notifications-resources'
+        path: '$(Pipeline.Workspace)/resources'
+
+    - template: DeploymentResources/Jobs/deploy.subscription.yml@EKFunctions
+      parameters:
+        ServiceConnection: ${{ parameters.ServiceConnection }}
+        AppServiceName: ${{ parameters.AppServiceName }}
+        ResourceGroupName: $(resourceGroupName)
+        ResourceGroupLocation: $(location)

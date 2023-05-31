@@ -1,0 +1,48 @@
+parameters:
+  ServiceConnection: ''
+  AppServiceName: ''
+  Dependency: ''
+  InstallContrast: false
+
+jobs:
+- job: DeployPortal
+  displayName: 'Deploy Portal'
+  ${{ if ne(parameters.Dependency, '')}}:
+    dependsOn: ${{ parameters.Dependency }} 
+  ${{ if ne(parameters.Dependency, '')}}:
+    condition: succeeded('${{ parameters.Dependency }}')  
+    
+  pool: 
+    vmImage: 'ubuntu-latest'
+
+  variables:
+  - template: DeploymentResources/Resources/Variables/vars.portal.yml@EKPortal
+    parameters:
+      AppServiceName: ${{ parameters.AppServiceName }}
+
+  steps:
+    - task: DownloadPipelineArtifact@2
+      displayName: 'Download resources files'
+      inputs:
+        source: 'current'
+        artifact: 'portal-resources'
+        path: '$(Pipeline.Workspace)/resources'
+
+    - task: DownloadPipelineArtifact@2
+      displayName: 'Download services files'
+      inputs:
+        source: 'current'
+        artifact: 'portal-service'
+        path: '$(Pipeline.Workspace)/service'
+
+    - checkout: EKPortal
+      path: 'ExtensionsKit.Portal'
+
+    - template: DeploymentResources/Jobs/deploy.components.yml@EKPortal
+      parameters: 
+        ServiceConnection: ${{ parameters.ServiceConnection }}
+        ResourceGroupName: $(resourceGroupName)
+        ResourceGroupLocation: $(location)
+        AppServiceName: ${{ parameters.AppServiceName }}
+        WorkingDirectory: "$(Pipeline.Workspace)/ExtensionsKit.Portal"
+        InstallContrast: '${{ parameters.InstallContrast }}'

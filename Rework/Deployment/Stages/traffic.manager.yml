@@ -1,0 +1,41 @@
+parameters:
+  ServiceConnection: ''
+  EnvironmentName: ''
+  ServiceName: ''
+  Dependency: ''
+  ResourceGroupName: ''
+
+stages:
+  - stage: TrafficManager_${{ parameters.EnvironmentName }}
+    displayName: '${{ parameters.EnvironmentName }} - Traffic Manager'
+    ${{ if ne(parameters.Dependency, '')}}:
+      dependsOn: ${{ parameters.Dependency }}
+    ${{ if ne(parameters.Dependency, '')}}:
+      condition: succeeded('${{ parameters.Dependency }}')
+
+    pool:
+      vmImage: 'windows-latest'
+
+    variables:
+      - template: ../Resources/Variables/vars.${{ parameters.EnvironmentName }}.yml
+
+    jobs:
+      - template: ../Jobs/deploy.traffic-manager.yml@self
+        parameters:
+          resourceGroupName: ${{ parameters.ResourceGroupName }}
+          ServiceConnection: ${{ parameters.ServiceConnection }}
+          serviceName: ${{ parameters.ServiceName }}
+          customDomain: $(customDomain)
+          customServiceName: $(customServiceName)
+          addDNSRecords: $(addDNSRecords)
+          dnsZoneResourceGroupName: $(dnsZoneResourceGroupName)
+          serviceNameSuffix: $(serviceNameSuffix)
+          customDomainVerificationID: $(customDomainVerificationID)
+          serviceNameGEO: $(serviceNameGEO)
+          deploymentModel: $(deploymentModel)
+          addTrafficManager: $(addTrafficManager)
+          addIPAllowListing: $(addIPAllowListing)
+          primaryBIGIPURL: $(primaryBIGIPURL)
+          secondaryBIGIPURL: $(secondaryBIGIPURL)
+          dnsTTL: $(dnsTTL)
+          u4costId: $(u4costId)

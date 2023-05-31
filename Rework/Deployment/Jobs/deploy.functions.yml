@@ -1,0 +1,177 @@
+parameters:
+  ServiceConnection: ''
+  FlowMetricsAppServiceName: ''
+  FlowNotificationsAppServiceName: ''
+  InvitationsAppServiceName: ''
+  XsltProcessorAppServiceName: ''
+  Dependency: ''
+    
+jobs: 
+- job: DeployFlowMetrics
+  displayName: 'Deploy Flow Metrics'
+  ${{ if ne(parameters.Dependency, '')}}:
+    dependsOn: ${{ parameters.Dependency }} 
+  ${{ if ne(parameters.Dependency, '')}}:
+    condition: succeeded('${{ parameters.Dependency }}')
+
+  pool: 
+    vmImage: 'ubuntu-latest'
+
+  variables:
+  - template: DeploymentResources/Resources/Variables/vars.flow-metrics.yml@EKFunctions
+    parameters:
+      AppServiceName: "${{ parameters.FlowMetricsAppServiceName }}"
+
+  steps:        
+    - task: DownloadPipelineArtifact@2
+      displayName: 'Download resources files'
+      inputs:
+        source: 'current'
+        artifact: 'flow-metrics-resources'
+        path: '$(Pipeline.Workspace)/resources'
+
+    - task: DownloadPipelineArtifact@2
+      displayName: 'Download services files'
+      inputs:
+        source: 'current'
+        artifact: 'flow-metrics-service'
+        path: '$(Pipeline.Workspace)/service'
+
+    - checkout: EKFunctions
+      path: 'ExtensionsKit.Functions/flow-metrics'
+
+    - template: DeploymentResources/Jobs/deploy.function.yml@EKFunctions
+      parameters:
+        ServiceConnection: ${{ parameters.ServiceConnection }}
+        AppServiceName: ${{ parameters.FlowMetricsAppServiceName }}
+        ResourceGroupName: $(resourceGroupName)
+        ResourceGroupLocation: $(location)
+        RequiresGsrRegistration: 'false'
+
+- job: DeployFlowNotifications
+  displayName: 'Deploy Flow Notifications'
+  ${{ if ne(parameters.Dependency, '')}}:
+    dependsOn: ${{ parameters.Dependency }} 
+  ${{ if ne(parameters.Dependency, '')}}:
+    condition: succeeded('${{ parameters.Dependency }}')  
+  
+  pool: 
+    vmImage: 'ubuntu-latest'
+
+  variables:
+  - template: DeploymentResources/Resources/Variables/vars.flow-notification.yml@EKFunctions
+    parameters:
+      AppServiceName: "${{ parameters.FlowNotificationsAppServiceName }}"
+
+  steps:
+    - task: DownloadPipelineArtifact@2
+      displayName: 'Download resources files'
+      inputs:
+        source: 'current'
+        artifact: 'flow-notifications-resources'
+        path: '$(Pipeline.Workspace)/resources'
+
+    - task: DownloadPipelineArtifact@2
+      displayName: 'Download services files'
+      inputs:
+        source: 'current'
+        artifact: 'flow-notifications-service'
+        path: '$(Pipeline.Workspace)/service'
+
+    - checkout: EKFunctions
+      path: 'ExtensionsKit.Functions/flow-notifications'
+
+    - template: DeploymentResources/Jobs/deploy.function.yml@EKFunctions
+      parameters:
+        ServiceConnection: ${{ parameters.ServiceConnection }}
+        AppServiceName: ${{ parameters.FlowNotificationsAppServiceName }}
+        ResourceGroupName: $(resourceGroupName)
+        ResourceGroupLocation: $(location)
+
+- job: DeployInvitations
+  displayName: 'Deploy Invitation'
+  ${{ if ne(parameters.Dependency, '')}}:
+    dependsOn: ${{ parameters.Dependency }} 
+  ${{ if ne(parameters.Dependency, '')}}:
+    condition: succeeded('${{ parameters.Dependency }}')  
+  
+  pool: 
+    vmImage: 'ubuntu-latest'
+
+  variables:
+  - template: DeploymentResources/Resources/Variables/vars.invitation-sender.yml@EKFunctions
+    parameters:
+      AppServiceName: "${{ parameters.InvitationsAppServiceName }}"
+
+  steps:
+    - task: DownloadPipelineArtifact@2
+      displayName: 'Download resources files'
+      inputs:
+        source: 'current'
+        artifact: 'invitations-resources'
+        path: '$(Pipeline.Workspace)/resources'
+
+    - task: DownloadPipelineArtifact@2
+      displayName: 'Download services files'
+      inputs:
+        source: 'current'
+        artifact: 'invitations-service'
+        path: '$(Pipeline.Workspace)/service'
+
+    - checkout: EKFunctions
+      path: 'ExtensionsKit.Functions/invitations'
+
+    - template: DeploymentResources/Jobs/deploy.function.yml@EKFunctions
+      parameters:
+        ServiceConnection: ${{ parameters.ServiceConnection }}
+        AppServiceName: ${{ parameters.InvitationsAppServiceName }}
+        ResourceGroupName: $(resourceGroupName)
+        ResourceGroupLocation: $(location)
+        RequiresGsrRegistration: 'false'
+
+    - template: DeploymentResources/Jobs/deploy.functionKey.yml@EKFunctions
+      parameters:
+        ServiceConnection: ${{ parameters.ServiceConnection }}
+        AppServiceName: ${{ parameters.InvitationsAppServiceName }}
+        ResourceGroupName: $(resourceGroupName)
+        WorkingDirectory: "$(Pipeline.Workspace)/ExtensionsKit.Functions/invitations"
+
+- job: DeployXsltProcessor
+  displayName: 'Deploy XSLT Processor'
+  ${{ if ne(parameters.Dependency, '')}}:
+    dependsOn: ${{ parameters.Dependency }} 
+  ${{ if ne(parameters.Dependency, '')}}:
+    condition: succeeded('${{ parameters.Dependency }}')  
+  
+  pool: 
+    vmImage: 'ubuntu-latest'
+
+  variables:
+  - template: DeploymentResources/Resources/Variables/vars.xslt.yml@EKFunctions
+    parameters:
+      AppServiceName: "${{ parameters.XsltProcessorAppServiceName }}"
+
+  steps:
+    - task: DownloadPipelineArtifact@2
+      displayName: 'Download resources files'
+      inputs:
+        source: 'current'
+        artifact: 'xslt-processor-resources'
+        path: '$(Pipeline.Workspace)/resources'
+
+    - task: DownloadPipelineArtifact@2
+      displayName: 'Download services files'
+      inputs:
+        source: 'current'
+        artifact: 'xslt-processor-service'
+        path: '$(Pipeline.Workspace)/service'
+
+    - checkout: EKFunctions
+      path: 'ExtensionsKit.Functions/xslt-processor'
+
+    - template: DeploymentResources/Jobs/deploy.function.yml@EKFunctions
+      parameters:
+        ServiceConnection: ${{ parameters.ServiceConnection }}
+        AppServiceName: ${{ parameters.XsltProcessorAppServiceName }}
+        ResourceGroupName: $(resourceGroupName)
+        ResourceGroupLocation: $(location)

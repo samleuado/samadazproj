@@ -1,0 +1,45 @@
+parameters:
+  ServiceConnection: ''
+  AppServiceName: ''
+  Dependency: ''
+
+jobs:
+- job: DeployOrchestrator
+  displayName: 'Deploy Orchestrator'
+  ${{ if ne(parameters.Dependency, '')}}:
+    dependsOn: ${{ parameters.Dependency }} 
+  ${{ if ne(parameters.Dependency, '')}}:
+    condition: succeeded('${{ parameters.Dependency }}')  
+  
+  pool: 
+    vmImage: 'ubuntu-latest'
+    
+  variables:
+  - template: DeploymentResources/Resources/Variables/vars.orchestrator.yml@EKOrchestrator
+    parameters:
+      AppServiceName: "${{ parameters.AppServiceName }}"
+
+  steps:
+    - task: DownloadPipelineArtifact@2
+      displayName: 'Download resources files'
+      inputs:
+        source: 'current'
+        artifact: 'orchestrator-resources'
+        path: '$(Pipeline.Workspace)/resources'
+
+    - task: DownloadPipelineArtifact@2
+      displayName: 'Download services files'
+      inputs:
+        source: 'current'
+        artifact: 'orchestrator-service'
+        path: '$(Pipeline.Workspace)/service'
+
+    - checkout: EKOrchestrator
+      path: 'ExtensionsKit.Orchestrator'
+
+    - template: DeploymentResources/Jobs/deploy.orchestrator.yml@EKOrchestrator
+      parameters: 
+        ServiceConnection: ${{ parameters.ServiceConnection }}
+        AppServiceName: ${{ parameters.AppServiceName }}
+        ResourceGroupName: $(resourceGroupName)
+        ResourceGroupLocation: $(location)

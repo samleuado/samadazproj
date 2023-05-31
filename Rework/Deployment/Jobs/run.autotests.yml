@@ -1,0 +1,54 @@
+parameters:
+  ServiceConnection: ''
+  EnvironmentName: ''
+  Dependency: ''
+
+jobs:
+- job: RunAutotest
+  displayName: 'Autotests'
+  timeoutInMinutes: 0
+  ${{ if ne(parameters.Dependency, '')}}:
+    dependsOn: ${{ parameters.Dependency }} 
+  ${{ if ne(parameters.Dependency, '')}}:
+    condition: succeeded('${{ parameters.Dependency }}')  
+
+  pool: 
+    vmImage: 'windows-latest'
+
+  steps:
+    - task: DownloadPipelineArtifact@2
+      displayName: 'Download files'
+      inputs:
+        source: 'specific'
+        project: '901a45d7-f45c-486f-8bc2-ca12fcf433cd'
+        pipeline: 961
+        tags: candidate
+        allowPartiallySucceededBuilds: true
+        artifact: 'autotest-artifacts'
+        path: '$(Pipeline.Workspace)/autotest-artifacts'
+
+    - task: VisualStudioTestPlatformInstaller@1
+      displayName: 'Install platform'
+
+    - task: AzureKeyVault@2
+      displayName: "Getting secrets from Key Vault"
+      inputs:
+        azureSubscription: '${{ parameters.ServiceConnection }}'
+        KeyVaultName: '$(sharedKeyVaultName)'
+        SecretsFilter: "$(autotestUser), $(autotestPassword)"
+        RunAsPreJob: false
+
+    - task: VSTest@2
+      displayName: 'Run tests'
+      continueOnError: true
+      inputs:
+        testAssemblyVer2: '**\ExtensionKit.Autotests.dll'
+        searchFolder: '$(Pipeline.Workspace)/autotest-artifacts/'
+        testRunTitle: 'UI Tests: ${{ parameters.EnvironmentName }}'
+        uiTests: true
+        runSettingsFile: '$(Pipeline.Workspace)/autotest-artifacts/testConfig.runsettings'
+        overrideTestrunParameters: '-applicationUrl "$(portalUrl)" -adminTenantId "$(autotestAdminTenantShortName)" -nonAdminTenantId "$(autotestNonAdminTenantShortName)" -loginUser "$(ek-autotest-userId)" -password "$(ek-autotest-secretId)" -sourceSystem "$(ekSourceSystem)"'
+        rerunFailedTests: true
+      env:
+        AUTOTESTUSER: $(ek-autotest-userId)
+        AUTOTESTPASSWORD: $(ek-autotest-secretId)

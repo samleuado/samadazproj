@@ -1,0 +1,77 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "serviceName": {
+            "type": "string",
+            "metadata": {
+                "desciption": "Service name"
+            }
+        },
+        "extensionName": {
+            "type": "string",
+            "metadata": {
+                "description": "Extension name used for Uri path"
+            }
+        },
+        "extensionType": {
+            "type": "string",
+            "metadata": {
+                "description": "Extension unique identifier"
+            }
+        },
+        "extensionVersion": {
+            "type": "int",
+            "metadata": {
+                "description": "Extension version"
+            }
+        },    
+        "eventDeadLetterContainer": {
+            "type": "string",
+            "defaultValue": "event-dead-letter-storage",
+            "metadata": {
+                "description": "Container name for events dead lettering"
+            }
+        }
+    },
+    "variables": {
+        "location": "[resourceGroup().location]",
+        "subscriptionName": "[concat(parameters('serviceName'), '/Microsoft.EventGrid/', parameters('serviceName'), '-extensions-', parameters('extensionName'))]",
+        "subjectFilter": "[concat('/', parameters('extensionType'), '/', parameters('extensionVersion'))]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.EventGrid/topics/providers/eventSubscriptions",
+            "apiVersion": "2019-06-01",
+            "name": "[variables('subscriptionName')]",
+            "location": "[variables('location')]",
+            "properties": {
+                "eventDeliverySchema": "CloudEventSchemaV1_0",
+                "destination": {
+                    "endpointType": "StorageQueue",
+                    "properties": {
+                        "resourceId": "[resourceId('Microsoft.Storage/storageAccounts', replace(parameters('serviceName'),'-',''))]",
+                        "queueName": "[concat(parameters('extensionType'), '-queue')]"
+                    }
+                },
+                "filter": {
+                    "includedEventTypes": [
+                        "ActionStarted"
+                    ],
+                    "subjectEndsWith": "[variables('subjectFilter')]"
+                },
+                "retryPolicy": {
+                    "maxDeliveryAttempts": 30,
+                    "eventTimeToLiveInMinutes": 1440
+                },
+                "deadLetterDestination": {
+                    "endpointType": "StorageBlob",
+                    "properties": {
+                        "blobContainerName": "[parameters('eventDeadLetterContainer')]",
+                        "resourceId": "[resourceId('Microsoft.Storage/storageAccounts', replace(parameters('serviceName'),'-',''))]"
+                    }
+                }
+            }
+        }
+    ]
+}

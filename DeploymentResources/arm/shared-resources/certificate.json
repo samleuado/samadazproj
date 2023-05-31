@@ -1,0 +1,56 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+      "certificateName": {
+        "type": "string",
+        "metadata": {
+          "description": "Extensions Kit certificate resource name"
+        }
+      },
+      "certificate": {
+        "type": "securestring",
+        "metadata": {
+          "description": "Base64 encoded certificate."
+        }
+      },
+      "certificatePassword": {
+        "type": "securestring",
+        "metadata": {
+          "description": "The password for the certificate"
+        }
+      },
+      "u4costId": {
+          "type": "string",
+          "defaultValue": ""
+      }
+    },
+  
+    "variables": {
+      "location": "[resourceGroup().location]"
+    },
+  
+    "resources": [
+      {
+        "apiVersion": "2018-02-01",
+        "type": "Microsoft.Web/certificates",
+        "name": "[parameters('certificateName')]",
+        "location": "[variables('location')]",
+        "tags": {
+          "displayName": "Extensions Kit Certificate",
+          "U4COSTID": "[parameters('u4costId')]"
+        },
+        "properties": {
+          "pfxBlob": "[parameters('certificate')]",
+          "password": "[parameters('certificatePassword')]"
+        }
+      }
+    ],
+  
+    "outputs": {
+      "X509Certificate2Thumbprint": {
+        "type": "string",
+        "value": "[reference(concat('Microsoft.Web/certificates/', parameters('certificateName'))).thumbprint]"
+      }
+    }
+  }

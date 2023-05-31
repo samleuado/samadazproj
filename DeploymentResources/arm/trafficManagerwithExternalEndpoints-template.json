@@ -1,0 +1,95 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "addTrafficManager": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "customServiceName": {
+            "type": "string"
+        },
+        "serviceNameSuffix": {
+            "type": "string"
+        },
+        "primaryTarget": {
+            "type": "string"
+        },
+        "dnsTTL": {
+            "type": "int",
+            "defaultValue": 60
+        },
+        "protocol": {
+            "type": "string",
+            "defaultValue": "TCP"
+        },
+        "port": {
+            "type": "int",
+            "defaultValue": 443
+        },
+        "intervalInSeconds": {
+            "type": "int",
+            "defaultValue": 30
+        },
+        "toleratedNumberOfFailures": {
+            "type": "int",
+            "defaultValue": 3
+        },
+        "timeoutInSeconds": {
+            "type": "int",
+            "defaultValue": 10
+        },
+        "u4costId": {
+            "type": "string",
+            "defaultValue": ""
+        }
+    },
+    "variables": {
+        "serviceNameSuffixes": "[split(parameters('serviceNameSuffix'), ',')]"
+     },
+    "resources": [
+        {
+            "condition": "[equals(parameters('addTrafficManager'), 'yes')]",
+            "type": "Microsoft.Network/trafficManagerProfiles",
+            "apiVersion": "2018-04-01",
+            "name": "[concat(parameters('customServiceName'), '-', variables('serviceNameSuffixes')[copyIndex()])]",
+            "location": "global",
+            "tags": {
+                "U4COSTID": "[parameters('u4costId')]"
+            },
+            "copy": {
+                "name": "trafficmanagercopy",
+                "count": "[length(variables('serviceNameSuffixes'))]"
+            },
+            "properties": {
+                "profileStatus": "Enabled",
+                "trafficRoutingMethod": "Priority",
+                "dnsConfig": {
+                    "relativeName": "[concat(parameters('customServiceName'), '-', variables('serviceNameSuffixes')[copyIndex()])]",
+                    "ttl": "[parameters('dnsTTL')]"
+                },
+                "monitorConfig": {
+                    "protocol": "[parameters('protocol')]",
+                    "port": "[parameters('port')]",
+                    "intervalInSeconds": "[parameters('intervalInSeconds')]",
+                    "toleratedNumberOfFailures": "[parameters('toleratedNumberOfFailures')]",
+                    "timeoutInSeconds": "[parameters('timeoutInSeconds')]"
+                },
+                "endpoints": [
+                    {
+                        "id": "[concat(resourceId('Microsoft.Network/trafficManagerProfiles', concat(parameters('customServiceName'), '-', variables('serviceNameSuffixes')[copyIndex()])), '/externalEndpoints/primary')]",
+                        "name": "primary",
+                        "type": "Microsoft.Network/trafficManagerProfiles/externalEndpoints",
+                        "properties": {
+                            "endpointStatus": "Enabled",
+                            "target": "[parameters('primaryTarget')]",
+                            "weight": 1,
+                            "priority": 1
+                        }
+                    }
+                ],
+                "trafficViewEnrollmentStatus": "Disabled"
+            }
+        }
+    ]
+}

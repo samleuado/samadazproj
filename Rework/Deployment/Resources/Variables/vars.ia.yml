@@ -1,0 +1,339 @@
+variables:
+  - name: location
+    value: 'West Europe'
+
+  - name: locationShortcut
+    value: 'euw'
+
+  - name: isPrimaryEnvironment
+    value: true
+
+  - name: servicePrincipalID
+    value: '36fbc8a6-f683-43e1-9810-ffd662d4c113'
+
+  - name: resourceGroupName
+    value: "u4iaek"
+
+  - name: serviceDomain
+    value: 'u4ia.io'
+
+  - name: noScaleServicePlan
+    value: 'u4iaek-no-scale'
+
+  - name: noScaleServicePlanTier
+    value: 'B2'
+
+  - name: userQueriesServicePlan
+    value: 'u4iaek-user-queries'
+
+  - name: userQueriesServicePlanTier
+    value: 'B2'
+
+  - name: userQueriesServicePlanMaxInstances
+    value: '1'
+
+  - name: flowRuntimeServicePlan
+    value: 'u4iaek-flow-runtime'
+  
+  - name: flowRuntimeServicePlanTier
+    value: 'B2'
+
+  - name: flowRuntimeServicePlanMaxInstances
+    value: '1'
+
+  - name: consumptionServicePlan
+    value: 'u4iaek-consumption'
+    
+  - name: enableDiagnostic
+    value: false
+      
+  - name: appInsightsLocation
+    value: 'West Europe'
+
+  - name: workspaceResourceGroup
+    value: 'u4iaek-resources'
+
+  - name: workspaceName
+    value: 'u4ek-log-analytics-workspace'
+
+  - name: applicationInsightsName
+    value: 'u4iaek'
+
+  - name: keyVaultName
+    value: 'u4iaek'
+
+  - name: sharedKeyVaultName
+    value: 'kv-unit4demo4u'
+
+  - name: cosmosDbResourceGroup
+    value: 'u4iaek'
+
+  - name: cosmosDbName
+    value: 'u4iaek'
+
+  - name: cosmosDbSecondaryRegion
+    value: ''
+        
+  - name: storageAccountResourceGroup
+    value: 'u4iaek'
+
+  - name: storageAccountName
+    value: 'u4iaek'
+
+  - name: storageAccountSkuReplication
+    value: 'Standard_LRS'
+
+  - name: eventGridTopicResourceGroup
+    value: 'u4iaek'
+
+  - name: eventGridTopicName
+    value: 'u4iaek'
+
+  - name: redisResourceGroup
+    value: 'u4iaek'
+
+  - name: redisName
+    value: 'u4iaek'
+      
+  - name: redisCacheSku
+    value: "Basic"
+
+  - name: redisCacheCapacity
+    value: 0
+
+  - name: apiManagementName
+    value: 'ek-serverless-gateway'
+    
+  - name: apiManagementWithCertificateName
+    value: 'ek-serverless-mtls-gateway'
+
+  - name: enableMTLS
+    value: true
+
+  - name: ekSourceSystem
+    value: 'u4ek'
+
+  - name: ekAdminTenant
+    value: 'u4ia-directory-admins'
+
+  - name: ekAdminTenantName
+    value: 'Extensions Kit Admin Tenant'
+
+  - name: ekAdminTenantShortName
+    value: 'admin'
+
+  - name: ekAdminUserId
+    value: 'einar.onsum@unit4.com'
+
+  - name: ekAdminUserEmail
+    value: 'einar.onsum@unit4.com'
+
+  - name: ekAdminUserDisplayName
+    value: 'Einar Onsum'
+
+  - name: ekAdminTenantLogoUrl
+    value: 'https://unit4-prod.global.ssl.fastly.net/binaries/content/gallery/unit4/brand/unit4_logo1.png'
+
+  - name: emailSender
+    value: "no-reply-extensionkit@u4ia.io"  
+    
+  - name: emailDescription
+    value: "no-reply Extension Kit"
+
+  - name: emailKeySecretName
+    value: "u4pp-sendgrid-master-key"
+    
+  - name: azureFunctionKeySecretName
+    value: "u4iaek-azure-function-secret"
+  
+  - name: eventGridInternalKeySecretName
+    value: "u4iaek-internal-eventgrid-secret"
+
+  - name: idsKeyVaultName
+    value: 'kv-unit4demo4u'
+
+  - name: idsAdminUserName
+    value: 'ids-admin-client'
+
+  - name: idsAdminSecretName
+    value: 'ids-admin-client-secret'
+
+  - name: idsBaseUrl
+    value: 'https://ids.u4ia.io'
+
+  - name: idsUrl
+    value: 'https://ids.u4ia.io/identity'
+
+  - name: ekInternalClientId
+    value: 'u4iaek-internal'
+
+  - name: ekPortalClientId
+    value: 'u4iaek-portal-pkce'
+
+  - name: ekProvisionerClientId
+    value: 'u4iaek-provisioner'
+
+  - name: ekDiscoClientId
+    value: 'u4iaek-disco'
+
+  - name: mhInstanceName
+    value: 'mh'
+
+  - name: mhInstanceDomain
+    value: 'u4ia.io'
+    
+  - name: mhAccessProviderUrl
+    value: 'https://mh-accessprovider.u4ia.io'
+
+  - name: mhManagerUrl
+    value: 'https://mh-manager.u4ia.io'
+
+  - name: discoEnvironment
+    value: 'production'
+        
+  - name: discoveryStageName
+    value: 'ia'
+
+  - name: discoveryServiceUrl
+    value: 'https://discovery.u4ia.io/'
+  
+  - name: discoveryServiceIdsUrl
+    value: 'https://ids.u4ia.io'
+
+  - name: amApiUrl
+    value: 'https://am.u4ia.io'
+
+  - name: daPushApiUrl
+    value: 'https://u4ia-da-push-service.azurewebsites.net'
+
+  - name: instantUIApiUrl
+    value: ''
+
+  - name: portalUrl
+    value: 'https://ek-portal.u4ia.io'
+
+  - name: extensionsApiUrl
+    value: 'https://ek-extensions.u4ia.io'
+
+  - name: tafUrl
+    value: 'https://ek-taf.u4ia.io'
+  
+  - name: ekApiUrl
+    value: 'https://ek-api.u4ia.io'
+  
+  - name: hibernationApiUrl
+    value: 'https://ek-hibernation.u4ia.io'
+
+  - name: tenantsApiUrl
+    value: 'https://ek-tenants.u4ia.io'
+    
+  - name: tenantConsumptionUpdaterUrl
+    value: 'https://ek-tenant-consumption-updater.u4ia.io'
+
+  - name: flowsApiUrl
+    value: 'https://ek-flows.u4ia.io'
+
+  - name: flowNotificationUrl
+    value: 'https://ek-flow-notification-function.u4ia.io'
+
+  - name: flowHistoryApiUrl
+    value: 'https://ek-flowhistory.u4ia.io'
+
+  - name: ekInvitationSenderFunctionUrl
+    value: 'https://ek-invitation-sender.u4ia.io/api/InvitationSender'
+    
+  - name: xsltProcessorUrl
+    value: 'https://ek-functions-xslt.u4ia.io'
+
+  - name: orchestratorUrl
+    value: 'https://ek-orchestrator-functions.u4ia.io'
+
+  - name: webhookUrl
+    value: 'https://ek-trigger-http-webhook.u4ia.io'
+
+  - name: webhookV2Url
+    value: 'https://ek-trigger-http-webhook-v2.u4ia.io'
+    
+  - name: messageHubTriggerUrl
+    value: 'https://ek-trigger-message-hub.u4ia.io'
+
+  - name: schedulerTriggerUrl
+    value: 'https://ek-trigger-scheduler-eg.u4ia.io'
+
+  - name: actionUrl
+    value: 'https://ek-$(actionId)-function.u4ia.io'
+
+  - name: actionUrlPrefix
+    value: 'https://ek'
+
+  - name: actionUrlSuffix
+    value: 'function.u4ia.io'
+
+  - name: apiManagementUrl
+    value: 'https://ek-serverless-gateway.azure-api.net'
+
+  - name: apiManagementWithCertificateUrl
+    value: 'https://ek-serverless-mtls-gateway.azure-api.net'
+
+  - name: appStudioEnabled
+    value: false
+
+  - name: appStudioApiServiceUrl
+    value: ''
+
+  - name: appStudioRendererServiceUrl
+    value: ''
+
+  - name: appStudioBundle
+    value: ''
+
+  - name: externalCertificateKeyVaultResourceGroupName
+    value: 'rg-demo-global'
+
+  - name: externalCertificateKeyVaultName
+    value: 'kv-unit4demo4u'
+    
+  - name: externalCertificateName
+    value: 'u4iaiocertbinary'
+
+  - name: certificateKeyVault
+    value: 'kv-unit4demo4u'
+
+  - name: certificatePasswordName
+    value: 'u4iacertpwd'
+
+  - name: certificateSecretName
+    value: 'u4iacert-with-pwd'
+
+  - name: certificateName
+    value: 'u4iaek-cert'
+
+  - name: actionAppServiceName
+    value: "ek-$(actionId)-function"
+
+  - name: environmentName
+    value: "ia"
+
+  - name: serviceName
+    value: "u4iaek"
+
+  - name: customHostName
+    value: "ek"
+
+  - name: u4costId
+    value: ""
+
+  - name: logLevel
+    value: "Information"
+
+  - name: enableSwagger
+    value: "false"
+
+  - name: autotestAdminTenantShortName
+    value: ""
+
+  - name: autotestNonAdminTenantShortName
+    value: ""
+
+  - name: addDNSRecords
+    value: "no"

@@ -1,0 +1,50 @@
+parameters:
+- name: generateNewVersion
+  type: boolean
+- name: releaseType
+  type: string
+- name: components
+  type: object
+- name: actions
+  type: object
+
+stages:
+  - stage: 'GetArtifacts'
+    displayName: 'Get Artifacts'
+
+    jobs:
+      - job: SetVersion
+        steps:
+        - task: u4-versioning-variables@1
+          name: ServiceBundleVersion
+          displayName: 'Calculate Service Version'
+          inputs:
+            versionVariableName: 'u4Version'
+            serviceName: 'u4ek'
+            overrideSpecificValue: '${{ parameters.releaseType }}'
+            ${{ if eq(parameters.generateNewVersion, false) }}:
+              generateNewVersion: false
+
+        - task: Bash@3
+          name: SetVersion
+          inputs:
+            targetType: 'inline'
+            script: |
+              echo Extension Kit Version: $(u4Version).$(Build.BuildNumber)
+              echo "##vso[task.setvariable variable=serviceBundleVersion;isOutput=true;]$(u4Version)"
+
+      - ${{ each component in parameters.components }}:          
+        - template: ../Jobs/get.artifact.yml
+          parameters:    
+            ComponentName: ${{ component.name }}
+            ComponentId: ${{ component.id }}
+            PipelineId: ${{ component.pipelineId }}
+            RunId: ${{ component.runId }}
+
+      - ${{ each action in parameters.actions }}:          
+        - template: ../Jobs/get.artifact.yml
+          parameters:    
+            ComponentName: ${{ action.name }}
+            ComponentId: ${{ action.id }}
+            PipelineId: ${{ action.pipelineId }}
+            RunId: ${{ action.runId }}

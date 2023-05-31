@@ -1,0 +1,109 @@
+parameters:
+  ServiceConnection: ''
+  EnvironmentName: ''
+  ServiceName: ''
+  PrimaryBIGIPURL: ''
+
+
+jobs:
+- job: TrafficManager
+  displayName: 'Traffic Manager'
+  steps:
+    - checkout: self
+
+    - task: AzureResourceGroupDeployment@2
+      displayName: 'Create Traffic Manager'
+      inputs:
+        azureSubscription: '${{ parameters.ServiceConnection }}'
+        location: '$(location)'
+        resourceGroupName: '$(resourceGroupName)'
+        templateLocation: 'Linked artifact'
+        csmFile: '$(Build.SourcesDirectory)/Rework/Deployment/Resources/Components/trafficManager-template.json'
+        overrideParameters: '
+          -customServiceName "$(customServiceName)"
+          -primaryAppService "$(serviceName)"
+          -primaryResourceGroup "$(serviceName)"
+          -serviceNameSuffix "$(ServiceNameSuffix)"
+          -u4costId "$(u4costId)"'
+        deploymentMode: 'Incremental'
+
+    - task: AzurePowerShell@3
+      displayName: 'Add Custom Domain'
+      inputs:
+        azureSubscription: '${{ parameters.ServiceConnection }}'
+        ScriptPath: '$(Build.SourcesDirectory)/Rework/Deployment/Scripts/Add-CustomDomains.ps1'
+        ScriptArguments: '
+          -serviceName "$(serviceName)"
+          -resourceGroupName "$(serviceName)"
+          -serviceNameGEO "$(serviceNameGEO)"
+          -resourceGroupNameGeo "$(serviceNameGEO)"
+          -customServiceName "$(customServiceName)"
+          -customDomain "$(customDomain)"
+          -serviceNameSuffix "$(serviceNameSuffix)"'
+        azurePowerShellVersion: LatestVersion
+
+    - task: AzureResourceGroupDeployment@2
+      displayName: 'Create Traffic Manager with External endpoints'
+      inputs:
+        azureSubscription: '${{ parameters.ServiceConnection }}'
+        location: '$(location)'
+        resourceGroupName: '$(resourceGroupName)'
+        templateLocation: 'Linked artifact'
+        csmFile: '$(Build.SourcesDirectory)/Rework/Deployment/Resources/Components/trafficManagerwithExternalEndpoints-template.json'
+        overrideParameters: '
+          -customServiceName "$(customServiceName)"
+          -primaryTarget "$(primaryBIGIPURL)"
+          -serviceNameSuffix "$(ServiceNameSuffix)"
+          -u4costId "$(u4costId)"'
+        deploymentMode: 'Incremental'
+
+    - task: AzurePowerShell@3
+      displayName: 'Add Secondary External Endpoint to Traffic Managers'
+      inputs:
+        azureSubscription: '${{ parameters.ServiceConnection }}'
+        ScriptPath: '$(Build.SourcesDirectory)/Rework/Deployment/Scripts/Add-SecondaryEndpointToTMProfile.ps1'
+        ScriptArguments: '
+          -customServiceName "$(customServiceName)"
+          -TMResourceGroupName "$(serviceName)"
+          -ExternalEndpoint "$(secondaryBIGIPURL)"
+          -serviceNameSuffix "$(serviceNameSuffix)"
+          -EndpointType "ExternalEndpoints"'
+        azurePowerShellVersion: LatestVersion
+
+    - task: AzurePowerShell@3
+      displayName: 'Get allowed IPs'
+      inputs:
+        azureSubscription: '${{ parameters.ServiceConnection }}'
+        ScriptPath: '$(Build.SourcesDirectory)/Rework/Deployment/Scripts/Get-AllowedIPs.ps1'
+        ScriptArguments: '
+          -PrimaryFQDN "$(primaryBIGIPURL)"
+          -SecondaryFQDN "$(secondaryBIGIPURL)"
+          -FileName "AllowedIPs.txt"
+          -addIPAllowListing "$(addIPAllowListing)"'
+        azurePowerShellVersion: LatestVersion
+
+    - task: AzurePowerShell@3
+      displayName: 'Add allowed IPs'
+      inputs:
+        azureSubscription: '${{ parameters.ServiceConnection }}'
+        ScriptPath: '$(Build.SourcesDirectory)/Rework/Deployment/Scripts/Add-AllowedIPsToWebApps.ps1'
+        ScriptArguments: '
+          -ServiceName "$(serviceName)"
+          -ResourceGroupName "$(serviceName)"
+          -serviceNameSuffix "$(serviceNameSuffix)"
+          -FileName "AllowedIPs.txt"
+          -addIPAllowListing "$(addIPAllowListing)"'
+        azurePowerShellVersion: LatestVersion
+
+    - task: AzurePowerShell@4
+      displayName: 'Set APIM properties'
+      inputs:
+        azureSubscription: '${{ parameters.ServiceConnection }}'
+        ScriptPath: '$(Build.SourcesDirectory)/Rework/Deployment/Scripts/Set-ApiManagementProperty.ps1'
+        ScriptArguments: '
+          -ResourceGroupName "$(serviceName)"
+          -ServiceName "$(apiManagementName)"
+          -ExtensionKitUri "$(ekApiUrl)"
+          -ExtensionKitWebhookUri "$(webhookUrl)"
+          -ExtensionKitWebhookV2Uri "$(webhookV2Url)"'
+        azurePowerShellVersion: LatestVersion

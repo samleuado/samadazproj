@@ -1,0 +1,319 @@
+name: $(date:yyyy.MM.dd)-$(rev:r)
+
+parameters:
+  - name: components
+    type: object
+    default: 
+    - Name: 'Hibernation'
+      Id: 'hibernation'
+      PipelineId: 1326
+      RunId: -1
+
+    - Name: 'Orchestrator'
+      Id: 'orchestrator'
+      PipelineId: 1316
+      RunId: -1
+
+    - Name: 'PublicApi'
+      Id: 'public-api'
+      PipelineId: 1327
+      RunId: -1
+
+    - Name: 'ExtensionsApi'
+      Id: 'extensions-api'
+      PipelineId: 1259
+      RunId: -1
+
+    - Name: 'FlowsApi'
+      Id: 'flows-api'
+      PipelineId: 1264
+      RunId: -1
+
+    - Name: 'TenantsApi'
+      Id: 'tenants-api'
+      PipelineId: 1322
+      RunId: -1
+
+    - Name: 'TenantsConsumption'
+      Id: 'tenants-consumption'
+      PipelineId: 1323
+      RunId: -1
+
+    - Name: 'TAF'
+      Id: 'taf'
+      PipelineId: 1348
+      RunId: -1
+
+    - Name: 'FlowHistory'
+      Id: 'flow-history'
+      PipelineId: 1295
+      RunId: -1
+      
+    - Name: 'FlowMetrics'
+      Id: 'flow-metrics'
+      PipelineId: 1317
+      RunId: -1
+
+    - Name: 'FlowNotifications'
+      Id: 'flow-notifications'
+      PipelineId: 1319
+      RunId: -1
+    
+    - Name: 'Invitations'
+      Id: 'invitations'
+      PipelineId: 1320
+      RunId: -1
+    
+    - Name: 'MessageHubTrigger'
+      Id: 'mh-trigger'
+      PipelineId: 1329
+      RunId: -1
+    
+    - Name: 'SchedulerTrigger'
+      Id: 'scheduler-trigger'
+      PipelineId: 1301
+      RunId: -1
+    
+    - Name: 'WebhookTrigger'
+      Id: 'webhook-trigger'
+      PipelineId: 1315
+      RunId: -1
+    
+    - Name: 'Portal'
+      Id: 'portal'
+      PipelineId: 1324
+      RunId: -1
+    
+    - Name: 'XsltProcessor'
+      Id: 'xslt-processor'
+      PipelineId: 1343
+      RunId: -1
+
+  - name: actions
+    type: object
+    default: 
+    - Name: 'DaPushText'
+      Id: 'da-push-text'
+      PipelineId: 1275
+      RunId: -1
+      
+    - Name: 'DaQuestion'
+      Id: 'da-question'
+      PipelineId: 1277
+      RunId: -1
+      
+    - Name: 'Email'
+      Id: 'email'
+      PipelineId: 1265
+      RunId: -1
+      
+    - Name: 'EventGridPublish'
+      Id: 'event-grid-publish'
+      PipelineId: 1266
+      RunId: -1
+      
+    - Name: 'HttpRequest'
+      Id: 'http-request'
+      PipelineId: 1278
+      RunId: -1
+      
+    - Name: 'JsonParse'
+      Id: 'json-parse'
+      PipelineId: 1267
+      RunId: -1
+      
+    - Name: 'JsonToXml'
+      Id: 'json-to-xml'
+      PipelineId: 1268
+      RunId: -1
+      
+    - Name: 'MessageHubActor'
+      Id: 'mh-genactor'
+      PipelineId: 1280
+      RunId: -1
+      
+    - Name: 'MessageHubEvent'
+      Id: 'mh-event-action'
+      PipelineId: 1281
+      RunId: -1
+
+    - Name: 'Pause'
+      Id: 'pause'
+      PipelineId: 1363
+      RunId: -1
+      
+    - Name: 'PgpDecrypt'
+      Id: 'pgp-decrypt'
+      PipelineId: 1269
+      RunId: -1
+      
+    - Name: 'PgpEncrypt'
+      Id: 'pgp-encrypt'
+      PipelineId: 1270
+      RunId: -1
+      
+    - Name: 'SftpCreate'
+      Id: 'sftp-create'
+      PipelineId: 1282
+      RunId: -1
+
+    - Name: 'SftpDelete'
+      Id: 'sftp-delete'
+      PipelineId: 1283
+      RunId: -1
+
+    - Name: 'SftpGetContent'
+      Id: 'sftp-get-content'
+      PipelineId: 1285
+      RunId: -1
+      
+    - Name: 'SftpList'
+      Id: 'sftp-list'
+      PipelineId: 1284
+      RunId: -1
+      
+    - Name: 'SignXml'
+      Id: 'sign-xml'
+      PipelineId: 1286
+      RunId: -1
+      
+    - Name: 'Stop'
+      Id: 'stop'
+      PipelineId: 1271
+      RunId: -1
+      
+    - Name: 'Unit4IdResolver'
+      Id: 'u4id-resolver'
+      PipelineId: 1288
+      RunId: -1
+      
+    - Name: 'VerifyXml'
+      Id: 'verify-xml'
+      PipelineId: 1287
+      RunId: -1
+
+    - Name: 'XmlEncrypt'
+      Id: 'xml-encrypt'
+      PipelineId: 1361
+      RunId: -1
+      
+    - Name: 'XmlParse'
+      Id: 'xml-parse'
+      PipelineId: 1272
+      RunId: -1
+
+    - Name: 'Xslt'
+      Id: 'xslt-transformation'
+      PipelineId: 1274
+      RunId: -1
+
+    - Name: 'Xslt3'
+      Id: 'xslt3-transformation'
+      PipelineId: 1340
+      RunId: -1
+
+    - Name: 'XmlDecrypt'
+      Id: 'xml-decrypt'
+      PipelineId: 1360
+      RunId: -1
+
+    - Name: 'ExecuteTemplatingScript'
+      Id: 'execute-templating-script'
+      PipelineId: 1297
+      RunId: -1
+
+    - Name: 'ForEach'
+      Id: 'for-each'
+      PipelineId: 1298
+      RunId: -1
+
+trigger:
+  - deploy-rework
+
+pr:
+  autoCancel: true
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  - group: 'Unit4 - Service Connections'
+  - group: 'WhiteSource'
+
+resources:
+  repositories:
+  - repository: PeoplePlatformTools
+    type: git
+    name: PeoplePlatform.Tools
+    ref: 'main'
+  - repository: EKFlowHistory
+    type: git
+    name: ExtensionsKit.FlowHistory
+    ref: 'master'
+  - repository: EKPortal
+    type: git
+    name: ExtensionsKit.Portal
+    ref: 'master'
+  - repository: EKFunctions
+    type: git
+    name: ExtensionsKit.Functions
+    ref: 'master'
+  - repository: EKTenants
+    type: git
+    name: ExtensionKit.TenantDomain
+    ref: 'main'
+  - repository: EKHibernation
+    type: git
+    name: ExtensionKit.HibernationService
+    ref: 'master'
+  - repository: EKOrchestrator
+    type: git
+    name: ExtensionsKit.Orchestrator
+    ref: 'master'
+  - repository: EKPublicAPI
+    type: git
+    name: ExtensionsKit.API
+    ref: 'master'
+  - repository: EKExtensions
+    type: git
+    name: ExtensionKit.Extensions
+    ref: 'master'
+  - repository: EKAutotests
+    type: git
+    name: ExtensionKit.Autotests
+    ref: 'master'
+  
+stages:
+
+    # GET ARTIFACTS
+
+    - template: Stages/all.artifacts.yml
+      parameters:
+        Components: ${{ parameters.components }}
+        Actions: ${{ parameters.actions }}
+
+    # NPE EU - Secondary
+
+    # - template: Stages/environment.common.yml
+    #   parameters:
+    #     EnvironmentName: 'dev'
+    #     ServiceName: 'u4ek-dev'
+    #     ServiceConnection: $(PeoplePlatformDevelopment)
+
+    # - template: Stages/all.components.yml
+    #   parameters:
+    #     EnvironmentName: 'dev'
+    #     ServiceConnection: $(PeoplePlatformDevelopment)
+    #     Dependency: 'Infrastructure_dev'
+
+    # - template: Stages/all.action.yml
+    #   parameters:
+    #     EnvironmentName: 'dev'
+    #     ServiceConnection: $(PeoplePlatformDevelopment)
+    #     Dependency: 'Components_dev'
+
+    # - template: Stages/health.yml
+    #   parameters:
+    #     EnvironmentName: 'dev'
+    #     ServiceConnection: $(PeoplePlatformDevelopment)
+    #     Dependency: 'Actions_dev'

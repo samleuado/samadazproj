@@ -1,0 +1,78 @@
+parameters:
+  ServiceConnection: ''
+  MessageHubTriggerAppServiceName: ''
+  MessageHubTriggerDependency: ''
+  SchedulerTriggerAppServiceName: ''
+  SchedulerTriggerDependency: ''
+  WebhookTriggerAppServiceName: ''
+  WebhookTriggerDependency: ''
+
+jobs:
+- job: DeployMHTriggerSubscription
+  displayName: 'Deploy MH Trigger Subscription'
+  ${{ if ne(parameters.MessageHubTriggerDependency, '')}}:
+    dependsOn: ${{ parameters.MessageHubTriggerDependency }} 
+  ${{ if ne(parameters.MessageHubTriggerDependency, '')}}:
+    condition: succeeded('${{ parameters.MessageHubTriggerDependency }}')  
+
+  steps:
+    - task: DownloadPipelineArtifact@2
+      displayName: 'Download resources files'
+      inputs:
+        source: 'current'
+        artifact: 'mh-trigger-resources'
+        path: '$(Pipeline.Workspace)/resources'
+
+    - template: DeploymentResources/Jobs/deploy.subscription.yml@EKExtensions
+      parameters:
+        ServiceConnection: ${{ parameters.ServiceConnection }}
+        AppServiceName: ${{ parameters.MessageHubTriggerAppServiceName }}
+        ResourceGroupName: $(resourceGroupName)
+        ResourceGroupLocation: $(location)
+        SubscriptionFile: '$(Pipeline.Workspace)/resources/mh-trigger-subscription-template.json'
+
+- job: DeploySchedulerTriggerSubscription
+  displayName: 'Deploy Scheduler Trigger Subscription'
+  ${{ if ne(parameters.SchedulerTriggerDependency, '')}}:
+    dependsOn: ${{ parameters.SchedulerTriggerDependency }} 
+  ${{ if ne(parameters.SchedulerTriggerDependency, '')}}:
+    condition: succeeded('${{ parameters.SchedulerTriggerDependency }}')  
+
+  steps:
+    - task: DownloadPipelineArtifact@2
+      displayName: 'Download resources files'
+      inputs:
+        source: 'current'
+        artifact: 'scheduler-trigger-resources'
+        path: '$(Pipeline.Workspace)/resources'
+
+    - template: DeploymentResources/Jobs/deploy.subscription.yml@EKExtensions
+      parameters:
+        ServiceConnection: ${{ parameters.ServiceConnection }}
+        AppServiceName: ${{ parameters.SchedulerTriggerAppServiceName }}
+        ResourceGroupName: $(resourceGroupName)
+        ResourceGroupLocation: $(location)
+        SubscriptionFile: '$(Pipeline.Workspace)/resources/scheduler-subscription-template.json'
+
+- job: DeployWebhookV2TriggerSubscription
+  displayName: 'Deploy WebhookV2 Trigger Subscription'
+  ${{ if ne(parameters.WebhookTriggerDependency, '')}}:
+    dependsOn: ${{ parameters.WebhookTriggerDependency }} 
+  ${{ if ne(parameters.WebhookTriggerDependency, '')}}:
+    condition: succeeded('${{ parameters.WebhookTriggerDependency }}')  
+
+  steps:
+    - task: DownloadPipelineArtifact@2
+      displayName: 'Download resources files'
+      inputs:
+        source: 'current'
+        artifact: 'webhook-trigger-resources'
+        path: '$(Pipeline.Workspace)/resources'
+
+    - template: DeploymentResources/Jobs/deploy.subscription.yml@EKExtensions
+      parameters:
+        ServiceConnection: ${{ parameters.ServiceConnection }}
+        AppServiceName: ${{ parameters.WebhookTriggerAppServiceName }}
+        ResourceGroupName: $(resourceGroupName)
+        ResourceGroupLocation: $(location)
+        SubscriptionFile: '$(Pipeline.Workspace)/resources/webhook-v2-subscription-template.json'

@@ -1,0 +1,285 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "actionGroupId": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "The action group for the alert actions"
+            }
+        },
+        "servicePlanNames": {
+            "type": "array",
+            "defaultValue": [],
+            "metadata": {
+                "description": "A list of [Microsoft.Web/serverfarms] service plan names for creating alerts"
+            }
+        },
+        "serviceNames": {
+            "type": "array",
+            "defaultValue": [],
+            "metadata": {
+                "description": "A list of [Microsoft.Web/sites] service names for creating alerts"
+            }
+        },
+        "appInsightsLocation": {
+            "type":"string"
+        },
+        "u4costId": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "appInsightsName": {
+            "type": "string",
+            "defaultValue": ""
+        }
+    },
+    "variables": {
+        "appInsightsId": "[resourceId('Microsoft.Insights/components', if(empty(parameters('appInsightsName')), resourceGroup().name, parameters('appInsightsName')))]",
+        "logAlertsTag": "[concat('hidden-link:/',variables('appInsightsId'))]",
+        "queriesFor": ["exceptions", "traces"]
+    },
+    "resources": [
+        {
+            "comments": "Server errors [5xx] with Dynamic Thresholds for App services",
+            "condition": "[greater(length(parameters('serviceNames')), 0)]",
+            "name": "[concat(parameters('serviceNames')[copyIndex()],'-ServerErrors')]",
+            "type": "Microsoft.Insights/metricAlerts",
+            "location": "global",
+            "apiVersion": "2018-03-01",            
+            "tags": {
+                "U4COSTID": "[parameters('u4costId')]"
+            },
+            "properties": {
+                "description": "Server errors metric alert with Dynamic Thresholds for App services",
+                "severity": 0,
+                "enabled": true,
+                "scopes": [
+                    "[resourceId('Microsoft.Web/sites', parameters('serviceNames')[copyIndex()])]"
+                ],
+                "evaluationFrequency":"PT15M",
+                "windowSize": "PT15M",
+                "criteria": {
+                    "odata.type": "Microsoft.Azure.Monitor.MultipleResourceMultipleMetricCriteria",
+                    "allOf": [{
+                            "criterionType": "DynamicThresholdCriterion",
+                            "name" : "1st criterion",
+                            "metricName": "Http5xx",
+                            "dimensions":[{
+                                "name": "Instance",
+                                "operator": "Include",
+                                "values":["*"]
+                            }],
+                            "operator": "GreaterThan",
+                            "alertSensitivity": "Medium",
+                            "failingPeriods": {
+                                "numberOfEvaluationPeriods": 4,
+                                "minFailingPeriodsToAlert": 3
+                            },
+                            "timeAggregation": "Average"
+                    }]
+                },
+                "actions": [
+                    {
+                        "actionGroupId": "[parameters('actionGroupId')]"
+                    }
+                ]
+            },
+            "copy": {
+                "name": "SiteAlertsMetrics",
+                "count": "[length(parameters('serviceNames'))]"
+            }
+        },
+        {
+            "comments": "Average respponse time with Dynamic Thresholds for App services",
+            "name": "[concat(parameters('serviceNames')[copyIndex()],'-AverageResponseTime')]",
+            "type": "Microsoft.Insights/metricAlerts",
+            "location": "global",
+            "apiVersion": "2018-03-01",            
+            "tags": {
+                "U4COSTID": "[parameters('u4costId')]"
+            },
+            "properties": {
+                "description": "Average respponse time with Dynamic Thresholds for App services",
+                "severity": 2,
+                "enabled": true,
+                "scopes": [
+                    "[resourceId('Microsoft.Web/sites', parameters('serviceNames')[copyIndex()])]"
+                ],
+                "evaluationFrequency":"PT15M",
+                "windowSize": "PT15M",
+                "criteria": {
+                    "odata.type": "Microsoft.Azure.Monitor.MultipleResourceMultipleMetricCriteria",
+                    "allOf": [{
+                        "criterionType": "DynamicThresholdCriterion",
+                        "name" : "1st criterion",
+                        "metricName": "AverageResponseTime",
+                        "dimensions":[{
+                            "name": "Instance",
+                            "operator": "Include",
+                            "values":["*"]
+                        }],
+                        "operator": "GreaterThan",
+                        "alertSensitivity": "Medium",
+                        "failingPeriods": {
+                            "numberOfEvaluationPeriods": 4,
+                            "minFailingPeriodsToAlert": 3
+                        },
+                        "timeAggregation": "Average"
+                    }]
+                },
+                "actions": [
+                    {
+                        "actionGroupId": "[parameters('actionGroupId')]"
+                    }
+                ]
+            },
+            "copy": {
+                "name": "SiteAlertsMetrics",
+                "count": "[length(parameters('serviceNames'))]"
+            }
+        },
+        {
+            "comments": "CPU usage metric for service plans under the resource group",
+            "condition": "[greater(length(parameters('servicePlanNames')), 0)]",
+            "name": "[concat(parameters('servicePlanNames')[copyIndex()],'-CPU-Usage')]",
+            "type": "Microsoft.Insights/metricAlerts",
+            "location": "global",
+            "apiVersion": "2018-03-01",
+            "tags": {
+                "U4COSTID": "[parameters('u4costId')]"
+            },
+            "properties": {
+                "description": "CPU usage metric for service plans under the resource group",
+                "severity": 2,
+                "enabled": true,
+                "scopes": [
+                    "[resourceId('Microsoft.Web/serverfarms', parameters('servicePlanNames')[copyIndex()])]"
+                ],
+                "evaluationFrequency":"PT15M",
+                "windowSize": "PT15M",
+                "criteria": {
+                    "odata.type": "Microsoft.Azure.Monitor.MultipleResourceMultipleMetricCriteria",
+                    "allOf": [{
+                        "criterionType": "DynamicThresholdCriterion",
+                        "name" : "1st criterion",
+                        "metricName": "CpuPercentage",
+                        "dimensions":[{
+                            "name": "Instance",
+                            "operator": "Include",
+                            "values":["*"]
+                        }],
+                        "failingPeriods": {
+                            "numberOfEvaluationPeriods": 4,
+                            "minFailingPeriodsToAlert": 3
+                        },
+                        "operator": "GreaterThan",
+                        "alertSensitivity": "Medium",
+                        "timeAggregation": "Average"
+                    }]
+                },
+                "actions": [
+                    {
+                        "actionGroupId": "[parameters('actionGroupId')]"
+                    }
+                ]
+            },
+            "copy": {
+                "name": "FarmAlertsMetrics",
+                "count": "[length(parameters('servicePlanNames'))]"
+            }
+        },
+        {
+            "comments": "Memory usage metric for service plans under the resource group",
+            "condition": "[greater(length(parameters('servicePlanNames')), 0)]",
+            "name": "[concat(parameters('servicePlanNames')[copyIndex()],'-MemoryPercentage')]",
+            "type": "Microsoft.Insights/metricAlerts",
+            "location": "global",
+            "apiVersion": "2018-03-01",
+            "tags": {
+                "U4COSTID": "[parameters('u4costId')]"
+            },
+            "properties": {
+                "description": "Memory usage metric for service plans under the resource group",
+                "severity": 2,
+                "enabled": true,
+                "scopes": [
+                    "[resourceId('Microsoft.Web/serverfarms', parameters('servicePlanNames')[copyIndex()])]"
+                ],
+                "evaluationFrequency":"PT15M",
+                "windowSize": "PT15M",
+                "criteria": {
+                    "odata.type": "Microsoft.Azure.Monitor.MultipleResourceMultipleMetricCriteria",
+                    "allOf": [{
+                        "criterionType": "DynamicThresholdCriterion",
+                        "name" : "1st criterion",
+                        "metricName": "MemoryPercentage",
+                        "dimensions":[{
+                            "name": "Instance",
+                            "operator": "Include",
+                            "values":["*"]
+                        }],
+                        "failingPeriods": {
+                            "numberOfEvaluationPeriods": 4,
+                            "minFailingPeriodsToAlert": 3
+                        },
+                        "operator": "GreaterThan",
+                        "alertSensitivity": "Medium",
+                        "timeAggregation": "Average"
+                    }]
+                },
+                "actions": [
+                    {
+                        "actionGroupId": "[parameters('actionGroupId')]"
+                    }
+                ]
+            },
+            "copy": {
+                "name": "FarmAlertsMetrics",
+                "count": "[length(parameters('servicePlanNames'))]"
+            }
+        },
+        {
+            "comments": "Critical exceptions and traces queries for real-time alert",
+            "name":  "[concat('Critical ',variables('queriesFor')[copyIndex()],' real-time alerts')]",
+            "type":"Microsoft.Insights/scheduledQueryRules",
+            "apiVersion": "2018-04-16",
+            "location": "[parameters('appInsightsLocation')]",
+            "tags":{
+                "[variables('logAlertsTag')]": "Resource",
+                "U4COSTID": "[parameters('u4costId')]"
+            },
+            "properties":{
+                "description": "Critical exceptions real-time alert",
+                "enabled": "true",
+                "source": {
+                    "query": "[concat(variables('queriesFor')[copyIndex()], ' | where  severityLevel >= 3 | where customDimensions.CategoryName != \"Microsoft.Extensions.Diagnostics.HealthChecks.DefaultHealthCheckService\" | where customDimensions.Category != \"Function.HealthCheckFunction.User\" | where customDimensions.Category != \"Microsoft.Extensions.Diagnostics.HealthChecks.DefaultHealthCheckService\"')]",
+                    "dataSourceId": "[variables('appInsightsId')]",
+                    "queryType":"ResultCount"
+                },
+                "schedule":{
+                    "frequencyInMinutes": 30,
+                    "timeWindowInMinutes": 40
+                },
+                "action":{
+                    "odata.type": "Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.Microsoft.AppInsights.Nexus.DataContracts.Resources.ScheduledQueryRules.AlertingAction",
+                    "severity": "0",
+                    "aznsAction":{
+                        "actionGroup": ["[parameters('actionGroupId')]"],
+                        "emailSubject":"[concat(resourceGroup().name, ': a critical error has occurred')]",
+                        "customWebhookPayload":"{ \"alertname\":\"#alertrulename\", \"IncludeSearchResults\":true }"
+                    },
+                    "trigger":{
+                        "thresholdOperator":"GreaterThan",
+                        "threshold": 0
+                    }
+                }
+            },
+            "copy": {
+                "name": "Queries",
+                "count": "[length(variables('queriesFor'))]"
+            }
+        }
+    ]
+}

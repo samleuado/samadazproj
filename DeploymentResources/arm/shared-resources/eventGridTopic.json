@@ -1,0 +1,48 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "topicName": {
+            "type": "string",
+            "metadata": {
+                "desciption": "Event Grid Topic name"
+            }
+        },
+        "addEventGridTopic": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "u4costId": {
+            "type": "string",
+            "defaultValue": ""
+        }
+    },
+    "variables": {
+        "location": "[resourceGroup().location]"
+    },
+    "resources": [
+        {
+            "condition": "[equals(parameters('addEventGridTopic'), 'yes')]",
+            "type": "Microsoft.EventGrid/topics",
+            "apiVersion": "2019-06-01",
+            "name": "[parameters('topicName')]",
+            "location": "[variables('location')]",
+            "tags": {
+                "U4COSTID": "[parameters('u4costId')]"
+            },
+            "properties": {
+                "inputSchema": "CloudEventSchemaV1_0"
+            }
+        }
+    ],
+    "outputs": {
+        "eventGridTopicEndpoint": {
+            "type": "string",
+            "value": "[reference(parameters('topicName')).endpoint]"
+        },
+        "eventGridTopicAccessKey": {
+            "type": "string",
+            "value": "[listKeys(resourceId('Microsoft.EventGrid/topics', parameters('topicName')), '2019-06-01').key1]"
+        }
+    }
+}

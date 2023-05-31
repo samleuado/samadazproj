@@ -1,0 +1,270 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "flowRuntimeAppServicePlanName": {
+      "type": "string",
+      "metadata": {
+        "description": "Extensions Kit Linux App Service Plan for services involved in Flow Execution"
+      }
+    },
+    "noScaleAppServicePlanName": {
+      "type": "string",
+      "metadata": {
+        "description": "Extensions Kit Linux App Service Plan for resources that cannot scale"
+      }
+    },
+    "consumptionAppServicePlanName": {
+      "type": "string",
+      "metadata": {
+        "description": "ExtensionKit Consumption plan for functions"
+      }
+    },
+    "userQueriesAppServicePlanName": {
+      "type": "string",
+      "metadata": {
+        "description": "Extension Kit User Queries plan for Portal and FlowHistory-reads"
+      }
+    },
+    "noScaleAppServiceTier": {
+      "type": "string",
+      "defaultValue": "P1v2"
+    },
+    "flowRuntimeAppServiceTier": {
+      "type": "string",
+      "defaultValue": "P1v2"
+    },
+    "userQueriesAppServiceTier": {
+      "type": "string",
+      "defaultValue": "S2"
+    },
+    "flowRuntimeMaxInstances": {
+      "type": "string",
+      "defaultValue": "2"
+    },
+    "userQueriesMaxInstances": {
+      "type": "string",
+      "defaultValue": "2"
+    },
+    "u4costId": {
+      "type": "string",
+      "defaultValue": ""
+    }
+  },
+
+  "variables": {
+    "location": "[resourceGroup().location]",
+    "tiers": {
+      "B1": {
+        "Tier": "Basic",
+        "Name": "B1"
+      },
+      "B2": {
+        "Tier": "Basic",
+        "Name": "B2"
+      },
+      "S2": {
+        "Tier": "Standard",
+        "Name": "S2"
+      },
+      "P1v2": {
+        "Tier": "PremiumV2",
+        "Name": "P1v2"
+      },
+      "P2v2": {
+        "Tier": "PremiumV2",
+        "Name": "P2v2"
+      },
+      "P3v2": {
+        "Tier": "PremiumV2",
+        "Name": "P3v2"
+      }
+    }
+  },
+
+  "resources": [
+    {
+      "apiVersion": "2019-08-01",
+      "name": "[parameters('noScaleAppServicePlanName')]",
+      "type": "Microsoft.Web/serverfarms",
+      "location": "[variables('location')]",
+      "kind": "linux",
+      "tags": {
+        "U4COSTID": "[parameters('u4costId')]"
+      },
+      "properties": {
+        "name": "[parameters('noScaleAppServicePlanName')]"
+      },
+      "sku": "[variables('tiers')[parameters('noScaleAppServiceTier')]]"
+    },
+    {
+      "apiVersion": "2019-08-01",
+      "name": "[parameters('userQueriesAppServicePlanName')]",
+      "type": "Microsoft.Web/serverfarms",
+      "location": "[variables('location')]",
+      "kind": "linux",
+      "tags": {
+        "U4COSTID": "[parameters('u4costId')]"
+      },
+      "properties": {
+        "name": "[parameters('userQueriesAppServicePlanName')]"
+      },
+      "sku": "[variables('tiers')[parameters('userQueriesAppServiceTier')]]"
+    },
+    {
+      "condition": "[not(equals(parameters('userQueriesAppServicePlanName'), 'B2'))]",
+      "type": "Microsoft.Insights/autoscalesettings",
+      "name": "[concat(parameters('userQueriesAppServicePlanName'), '-settings')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', parameters('userQueriesAppServicePlanName'))]"
+      ],
+      "apiVersion": "2015-04-01",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "enabled": true,
+        "targetResourceUri": "[resourceId('Microsoft.Web/serverfarms', parameters('userQueriesAppServicePlanName'))]",
+        "profiles": [
+          {
+            "name": "Default",
+            "capacity": {
+              "minimum": "1",
+              "maximum": "[parameters('userQueriesMaxInstances')]",
+              "default": "1"
+            },
+            "rules": [
+              {
+                "metricTrigger": {
+                  "metricName": "CpuPercentage",
+                  "metricResourceUri": "[resourceId('Microsoft.Web/serverfarms', parameters('userQueriesAppServicePlanName'))]",
+                  "timeGrain": "PT1M",
+                  "statistic": "Average",
+                  "timeWindow": "PT10M",
+                  "timeAggregation": "Average",
+                  "operator": "GreaterThan",
+                  "threshold": 60
+                },
+                "scaleAction": {
+                  "direction": "Increase",
+                  "type": "ChangeCount",
+                  "value": "1",
+                  "cooldown": "PT10M"
+                }
+              },
+              {
+                "metricTrigger": {
+                  "metricName": "CpuPercentage",
+                  "metricResourceUri": "[resourceId('Microsoft.Web/serverfarms', parameters('userQueriesAppServicePlanName'))]",
+                  "timeGrain": "PT1M",
+                  "statistic": "Average",
+                  "timeWindow": "PT1H",
+                  "timeAggregation": "Average",
+                  "operator": "LessThan",
+                  "threshold": 40
+                },
+                "scaleAction": {
+                  "direction": "Decrease",
+                  "type": "ChangeCount",
+                  "value": "1",
+                  "cooldown": "PT1H"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2019-08-01",
+      "name": "[parameters('flowRuntimeAppServicePlanName')]",
+      "type": "Microsoft.Web/serverfarms",
+      "location": "[variables('location')]",
+      "kind": "linux",
+      "tags": {
+        "U4COSTID": "[parameters('u4costId')]"
+      },
+      "properties": {
+        "name": "[parameters('flowRuntimeAppServicePlanName')]"
+      },
+      "sku": "[variables('tiers')[parameters('flowRuntimeAppServiceTier')]]"
+    },
+    {
+      "condition": "[not(equals(parameters('flowRuntimeAppServiceTier'), 'B2'))]",
+      "type": "Microsoft.Insights/autoscalesettings",
+      "name": "[concat(parameters('flowRuntimeAppServicePlanName'), '-settings')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', parameters('flowRuntimeAppServicePlanName'))]"
+      ],
+      "apiVersion": "2015-04-01",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "enabled": true,
+        "targetResourceUri": "[resourceId('Microsoft.Web/serverfarms', parameters('flowRuntimeAppServicePlanName'))]",
+        "profiles": [
+          {
+            "name": "Default",
+            "capacity": {
+              "minimum": "1",
+              "maximum": "[parameters('flowRuntimeMaxInstances')]",
+              "default": "1"
+            },
+            "rules": [
+              {
+                "metricTrigger": {
+                  "metricName": "CpuPercentage",
+                  "metricResourceUri": "[resourceId('Microsoft.Web/serverfarms', parameters('flowRuntimeAppServicePlanName'))]",
+                  "timeGrain": "PT1M",
+                  "statistic": "Average",
+                  "timeWindow": "PT10M",
+                  "timeAggregation": "Average",
+                  "operator": "GreaterThan",
+                  "threshold": 60
+                },
+                "scaleAction": {
+                  "direction": "Increase",
+                  "type": "ChangeCount",
+                  "value": "1",
+                  "cooldown": "PT10M"
+                }
+              },
+              {
+                "metricTrigger": {
+                  "metricName": "CpuPercentage",
+                  "metricResourceUri": "[resourceId('Microsoft.Web/serverfarms', parameters('flowRuntimeAppServicePlanName'))]",
+                  "timeGrain": "PT1M",
+                  "statistic": "Average",
+                  "timeWindow": "PT1H",
+                  "timeAggregation": "Average",
+                  "operator": "LessThan",
+                  "threshold": 40
+                },
+                "scaleAction": {
+                  "direction": "Decrease",
+                  "type": "ChangeCount",
+                  "value": "1",
+                  "cooldown": "PT1H"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2019-08-01",
+      "name": "[parameters('consumptionAppServicePlanName')]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "U4COSTID": "[parameters('u4costId')]"
+      },
+      "sku": {
+        "name": "Y1",
+        "tier": "Dynamic"
+      },
+      "properties": {
+        "name": "[parameters('consumptionAppServicePlanName')]",
+        "computeMode": "Dynamic"
+      }
+    }
+  ]
+}

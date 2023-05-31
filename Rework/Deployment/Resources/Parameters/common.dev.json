@@ -1,0 +1,9 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "actionGroupMails": {
+      "value": ["Miguel.Angel.Vilchez.Narvaez@unit4.com","david.gonzalez.sola@unit4.com","Celia.Navarro@unit4.com","diego.munoz.rio@unit4.com","nazaret.roman@unit4.com","frederic.vardon@unit4.com","adrian.lopezortiz@unit4.com","javier.fuentes@unit4.com"]
+    }
+  }
+}

@@ -1,0 +1,318 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "resourceName": {
+            "type": "string",
+            "metadata": {
+                "description": "Extensions Kit Application Insights instance name"
+            }
+        },
+        "actionGroupMails": {
+            "type": "array",
+            "defaultValue": []
+        },
+        "location": {
+            "type": "string",
+            "metadata": {
+                "description": "Extensions Kit Application Insights location"
+            }
+        },
+        "u4costId": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "availabilityTests": {
+            "type": "array",
+            "metadata": {
+                "description": "Set of availability tests to create for the stamp"
+            }
+        },
+        "availabilityTestsLocations": {
+            "type": "array",
+            "defaultValue": [
+                {
+                    "Id": "emea-ru-msa-edge"
+                },
+                {
+                    "Id": "emea-gb-db3-azr"
+                },
+                {
+                    "Id": "apac-jp-kaw-edge"
+                },
+                {
+                    "Id": "us-va-ash-azr"
+                },
+                {
+                    "Id": "emea-au-syd-edge"
+                }
+            ],
+            "metadata": {
+                "description": "Set of availability tests locations"
+            }
+        },
+        "workspaceName": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "workspaceRg": {
+            "type": "string",
+            "defaultValue": ""
+        }
+    },
+
+    "variables": {
+        "actionGroupName": "[concat(resourceGroup().name, '-ActionGroup')]",
+        "workspaceId": "[resourceId(parameters('workspaceRg'), 'Microsoft.OperationalInsights/workspaces', parameters('workspaceName'))]"
+    },
+
+    "resources": [
+        {
+            "comments": "Application Insights",
+            "apiVersion": "2015-05-01",
+            "type": "Microsoft.Insights/components",
+            "name": "[parameters('resourceName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [],
+            "tags": {
+                "displayName": "Extensions Kit Application Insights",
+                "U4COSTID": "[parameters('u4costId')]"
+            },
+            "properties": {
+                "applicationId": "[parameters('resourceName')]",
+                "Application_Type": "web"
+            },
+            "resources": [
+               
+            ]
+        },
+        {
+            "type": "Microsoft.Insights/diagnosticSettings",
+            "apiVersion": "2021-05-01-preview",
+            "name": "[parameters('resourceName')]",
+            "tags": {
+                "U4COSTID": "[parameters('u4costId')]"
+            },
+            "scope": "[format('Microsoft.Insights/components/{0}', parameters('resourceName'))]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Insights/components', parameters('resourceName'))]"
+            ],
+            "properties": {
+                "logs": [
+                    {
+                        "category": "AppAvailabilityResults",
+                        "enabled": true,
+                        "retentionPolicy": {
+                            "days": 90,
+                            "enabled": true
+                        }
+                    }
+                ],
+                "metrics": [
+                    {
+                        "category": "AllMetrics",
+                        "enabled": false,
+                        "retentionPolicy": {
+                            "days": 90,
+                            "enabled": false
+                    }
+                }
+            ],
+            "workspaceId": "[variables('workspaceId')]"
+            }
+        },
+        {
+            "comments": "EK action group",
+            "type": "Microsoft.Insights/actionGroups",
+            "apiVersion": "2018-03-01",
+            "name": "[variables('actionGroupName')]",
+            "location": "global",
+            "tags": {
+                "U4COSTID": "[parameters('u4costId')]"
+            },
+            "properties": {
+                "groupShortName": "EK-Monitor",
+                "enabled": true,
+                "smsReceivers": [
+                ],
+                "copy": [
+                    {
+                        "name": "emailReceivers",
+                        "count": "[length(parameters('actionGroupMails'))]",
+                        "input": {
+                            "name": "[concat(parameters('resourceName'), '-Admin (', copyIndex('emailReceivers'), ')')]",
+                            "emailAddress": "[parameters('actionGroupMails')[copyIndex('emailReceivers')]]"
+                        }
+                    }
+                ],
+                "webhookReceivers": [
+                ]
+            }
+        },
+        {
+            "comments": "Service Health Activity Log Alert",
+            "type": "Microsoft.Insights/activityLogAlerts",
+            "name": "ServiceHealthActivityLogAlert",
+            "apiVersion": "2017-04-01",
+            "location": "Global",
+            "tags": {
+                "U4COSTID": "[parameters('u4costId')]"
+            },
+            "scale": null,
+            "properties": {
+                "description": "Service Health Activity Log Alert",
+                "enabled": true,
+                "scopes": [
+                    "[resourceGroup().id]"
+                ],
+                "condition": {
+                    "allOf": [
+                        {
+                            "field": "category",
+                            "equals": "ServiceHealth"
+                        },
+                        {
+                            "field": "properties.incidentType",
+                            "equals": "Incident"
+                        },
+                        {
+                            "anyOf": [
+                                {
+                                    "field": "properties.cause",
+                                    "equals": "PlatformInitiated",
+                                    "containsAny": null
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "actions": {
+                    "actionGroups": [
+                        {
+                            "actionGroupId": "[resourceId('Microsoft.Insights/actionGroups', variables('actionGroupName'))]"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Insights/activityLogAlerts",
+            "apiVersion": "2017-04-01",
+            "name": "AutoscaleActivityLogAlert",
+            "location": "Global",
+            "tags": {
+                "U4COSTID": "[parameters('u4costId')]"
+            },
+            "dependsOn": [
+                "[variables('actionGroupName')]"
+            ],
+            "properties": {
+                "enabled": true,
+                "scopes": [
+                    "[resourceGroup().id]"
+                ],
+                "condition": {
+                    "allOf": [
+                        {
+                            "field": "category",
+                            "equals": "Autoscale"
+                        }
+                    ]
+                },
+                "actions": {
+                    "actionGroups": [
+                        {
+                            "actionGroupId": "[resourceId('Microsoft.Insights/actionGroups',variables('actionGroupName'))]"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "name": "[parameters('availabilityTests')[copyIndex()].name]",
+            "apiVersion": "2015-05-01",
+            "type": "microsoft.insights/webtests",
+            "location": "[parameters('location')]",
+            "tags": {
+                "[concat('hidden-link:', resourceId('microsoft.insights/components/', parameters('resourceName')))]": "Resource",
+                "U4COSTID": "[parameters('U4costId')]"
+            },
+            "dependsOn": [
+                "[parameters('ResourceName')]"
+            ],
+            "properties": {
+                "Name": "[parameters('availabilityTests')[copyIndex()].name]",
+                "Description": "[parameters('availabilityTests')[copyIndex()].description]",
+                "Enabled": true,
+                "Frequency": 300,
+                "Timeout": 30,
+                "RetryEnabled": true,
+                "Kind": "ping",
+                "Locations": "[parameters('availabilityTestsLocations')]",
+                "Configuration": {
+                    "WebTest": "[concat('<WebTest Name=\"', parameters('availabilityTests')[copyIndex()].name, '\" Id=\"', guid(parameters('availabilityTests')[copyIndex()].url), '\" Enabled=\"True\" CssProjectStructure=\"\" CssIteration=\"\" Timeout=\"30\" WorkItemIds=\"\"
+                                    xmlns=\"http://microsoft.com/schemas/VisualStudio/TeamTest/2010\" Description=\"\" CredentialUserName=\"\" CredentialPassword=\"\" PreAuthenticate=\"True\" Proxy=\"default\" StopOnError=\"False\" RecordedResultFile=\"\" ResultsLocale=\"\">
+                                    <Items>
+                                        <Request Method=\"GET\" Guid=\"acd34c85-940e-7e81-5835-e57ed87aade6\" Version=\"1.1\" Url=\"', parameters('availabilityTests')[copyIndex()].url, '/health\" ThinkTime=\"0\" Timeout=\"30\" ParseDependentRequests=\"False\" FollowRedirects=\"True\" RecordResult=\"True\" Cache=\"False\" ResponseTimeGoal=\"0\" Encoding=\"utf-8\" ExpectedHttpStatusCode=\"200\" ExpectedResponseUrl=\"\" ReportingName=\"\" IgnoreHttpStatusCode=\"False\" />
+                                    </Items>
+                                </WebTest>')]"
+                },
+                "SyntheticMonitorId": "[parameters('availabilityTests')[copyIndex()].name]"
+            },
+            "copy": {
+                "name": "createTests",
+                "count": "[length(parameters('availabilityTests'))]"
+            }
+        },
+        {
+            "name": "[concat(parameters('availabilityTests')[copyIndex()].name, '-alert')]",
+            "type": "Microsoft.Insights/metricAlerts",
+            "apiVersion": "2018-03-01",
+            "location": "global",
+            "dependsOn": [
+                "[resourceId('Microsoft.Insights/webtests', parameters('availabilityTests')[copyIndex()].name)]"
+            ],
+            "tags": {
+                "[concat('hidden-link:', resourceId('microsoft.insights/components/', parameters('resourceName')))]": "Resource",
+                "U4COSTID": "[parameters('u4costId')]"
+            },
+            "properties": {
+                "description": "Health Check alerts",
+                "severity": 1,
+                "enabled": true,
+                "scopes": [
+                    "[resourceId('Microsoft.Insights/webtests', parameters('availabilityTests')[copyIndex()].name)]",
+                    "[resourceId('Microsoft.Insights/components',parameters('resourceName'))]"
+                ],
+                "evaluationFrequency": "PT15M",
+                "windowSize": "PT15M",
+                "criteria": {
+                    "odata.type": "Microsoft.Azure.Monitor.WebtestLocationAvailabilityCriteria",
+                    "webTestId": "[resourceId('Microsoft.Insights/webtests', parameters('availabilityTests')[copyIndex()].name)]",
+                    "componentId": "[resourceId('Microsoft.Insights/components', parameters('resourceName'))]",
+                    "failedLocationCount": 2
+                },
+                "actions": [
+                    {
+                        "actionGroupId": "[resourceId('Microsoft.Insights/actionGroups',variables('actionGroupName'))]"
+                    }
+                ]
+            },
+            "copy": {
+                "name": "createHealthCheckAlerts",
+                "count": "[length(parameters('availabilityTests'))]"
+            }
+        }
+    ],
+
+    "outputs": {
+        "appInsightsInstrumentationKey": {
+            "type": "string",
+            "value": "[reference(concat('Microsoft.Insights/components/', parameters('resourceName'))).InstrumentationKey]"
+        },
+        "actionGroupId": {
+            "type": "string",
+            "value": "[resourceId('Microsoft.Insights/actionGroups', variables('actionGroupName'))]"
+        }
+    }
+}

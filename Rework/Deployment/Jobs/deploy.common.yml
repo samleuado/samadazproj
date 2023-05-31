@@ -1,0 +1,87 @@
+parameters:
+  ServiceName: ''
+  EnvironmentName: ''
+  ServiceConnection: ''
+
+jobs:
+  - deployment: 'DeployInfra'
+    displayName: 'Deploy Infrastructure'
+    environment: '${{ parameters.ServiceName }}'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+            - checkout: self
+
+            - task: BicepInstall@0
+              displayName: 'Install bicep CLI'
+              inputs:
+                version: 0.11.1
+     
+            - task: BicepBuild@0
+              displayName: 'Build bicep infrastructure files'
+              inputs:
+                process: 'single'
+                sourceFile: $(Build.SourcesDirectory)/Rework/Deployment/Resources/Common.bicep
+                stdout: false
+                outputFile: $(Build.SourcesDirectory)/Rework/Deployment/Resources/common.json
+
+            - task: AzureResourceManagerTemplateDeployment@3
+              displayName: 'Provision Azure resources for the service'
+              inputs:
+                deploymentScope: 'Subscription'
+                azureResourceManagerConnection: '${{ parameters.ServiceConnection }}'
+                location: '$(location)'
+                templateLocation: 'Linked artifact'
+                csmFile: '$(Build.SourcesDirectory)/Rework/Deployment/Resources/common.json'
+                csmParametersFile: '$(Build.SourcesDirectory)/Rework/Deployment/Resources/Parameters/common.${{ parameters.EnvironmentName }}.json'
+                overrideParameters: >
+                  -location "$(location)"
+                  -u4costId "$(u4costId)"
+                  -resourceGroupName "$(resourceGroupName)"
+                  -apiManagementName "$(apiManagementName)"
+                  -apiManagementWithCertificateName "$(apiManagementWithCertificateName)"
+                  -isPrimaryEnvironment "$(isPrimaryEnvironment)"
+                  -appInsightsName "$(applicationInsightsName)"
+                  -appInsightsLocation "$(appInsightsLocation)"
+                  -certificateName "$(externalCertificateName)"
+                  -certificateKeyVaultResourceGroupName "$(externalCertificateKeyVaultResourceGroupName)"
+                  -certificateKeyVaultName "$(externalCertificateKeyVaultName)"
+                  -idsKeyVaultName "$(idsKeyVaultName)"
+                  -servicePrincipalID "$(servicePrincipalID)"
+                  -storageAccountSkuReplication "$(storageAccountSkuReplication)"
+                  -cosmosDbSecondaryRegion "$(cosmosDbSecondaryRegion)"
+                  -idsUrl "$(idsUrl)"
+                  -internalClientId "$(ekInternalClientId)"
+                  -apiUrl "$(ekApiUrl)"
+                  -webhookUrl "$(webhookUrl)"
+                  -webhookV2Url "$(webhookV2Url)"
+                  -ekOwnerEmail "$(ekAdminUserEmail)"
+                  -ekOwnerName "$(ekAdminUserDisplayName)"
+                  -enableMTLS "$(enableMTLS)"
+                  -redisCacheSku "$(redisCacheSku)"
+                  -redisCacheCapacity "$(redisCacheCapacity)"
+                  -noScaleAppServiceTier "$(noScaleServicePlanTier)"
+                  -flowRuntimeAppServiceTier "$(flowRuntimeServicePlanTier)"
+                  -flowRuntimeMaxInstances "$(flowRuntimeServicePlanMaxInstances)"
+                  -userQueriesAppServiceTier "$(userQueriesServicePlanTier)"
+                  -userQueriesMaxInstances "$(userQueriesServicePlanMaxInstances)"
+                  -enableDiagnostic "$(enableDiagnostic)"
+                  -workspaceName "$(workspaceName)"
+                  -workspaceResourceGroup "$(workspaceResourceGroup)"
+                deploymentMode: 'Incremental'
+
+            - task: AzurePowerShell@3
+              displayName: 'Add CNAME Record in DNS Zone'
+              condition: eq(variables.addDNSRecords, 'yes')
+              inputs:
+                azureSubscription: '${{ parameters.ServiceConnection }}'
+                ScriptPath: '$(Build.SourcesDirectory)/Rework/Deployment/Scripts/Create-DNSRecords.ps1'
+                ScriptArguments: '
+                  -customDomain "$(customDomain)"
+                  -dnsZoneResourceGroupName "$(dnsZoneResourceGroupName)"
+                  -customServiceName "$(customServiceName)"
+                  -serviceNameSuffix "$(serviceNameSuffix)"
+                  -customDomainVerificationID "$(customDomainVerificationID)"'
+                azurePowerShellVersion: LatestVersion
+

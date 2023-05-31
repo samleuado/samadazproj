@@ -1,0 +1,181 @@
+parameters:
+  ServiceConnection: ''
+  FlowsApiAppServiceName: ''
+  ExtensionsApiAppServiceName: ''
+  HibernationApiAppServiceName: ''
+  HibernationFunctionName: ''
+  PublicApiAppServiceName: ''
+  Dependency: ''
+  InstallContrast: false
+
+jobs:
+- job: DeployFlowsAPI
+  displayName: 'Deploy Flows API'
+  ${{ if ne(parameters.Dependency, '')}}:
+    dependsOn: ${{ parameters.Dependency }} 
+  ${{ if ne(parameters.Dependency, '')}}:
+    condition: succeeded('${{ parameters.Dependency }}')  
+  
+  pool: 
+    vmImage: 'ubuntu-latest'
+    
+  variables:
+  - template: DeploymentResources/Resources/Variables/vars.flows.yml@EKOrchestrator
+    parameters:
+      AppServiceName: "${{ parameters.FlowsApiAppServiceName }}"
+
+  steps:
+    - task: DownloadPipelineArtifact@2
+      displayName: 'Download resources files'
+      inputs:
+        source: 'current'
+        artifact: 'flows-api-resources'
+        path: '$(Pipeline.Workspace)/resources'
+
+    - task: DownloadPipelineArtifact@2
+      displayName: 'Download services files'
+      inputs:
+        source: 'current'
+        artifact: 'flows-api-service'
+        path: '$(Pipeline.Workspace)/service'
+
+    - checkout: EKOrchestrator
+      path: 'ExtensionsKit.Orchestrator'
+
+    - template: DeploymentResources/Jobs/deploy.flows.yml@EKOrchestrator
+      parameters: 
+        ServiceConnection: ${{ parameters.ServiceConnection }}
+        AppServiceName: ${{ parameters.FlowsApiAppServiceName }}
+        ResourceGroupName: $(resourceGroupName)
+        ResourceGroupLocation: $(location)
+        WorkingDirectory: "$(Pipeline.Workspace)/ExtensionsKit.Orchestrator"
+        InstallContrast: '${{ parameters.InstallContrast }}'
+
+- job: DeployExtensionsAPI
+  displayName: 'Deploy Extensions API'
+  ${{ if ne(parameters.Dependency, '')}}:
+    dependsOn: ${{ parameters.Dependency }} 
+  ${{ if ne(parameters.Dependency, '')}}:
+    condition: succeeded('${{ parameters.Dependency }}')  
+
+  pool: 
+    vmImage: 'ubuntu-latest'
+
+  variables:
+  - template: DeploymentResources/Resources/Variables/vars.extensions-api.yml@EKExtensions
+    parameters:
+      AppServiceName: "${{ parameters.ExtensionsApiAppServiceName }}"
+
+  steps:
+    - task: DownloadPipelineArtifact@2
+      displayName: 'Download resources files'
+      inputs:
+        source: 'current'
+        artifact: 'extensions-api-resources'
+        path: '$(Pipeline.Workspace)/resources'
+
+    - task: DownloadPipelineArtifact@2
+      displayName: 'Download services files'
+      inputs:
+        source: 'current'
+        artifact: 'extensions-api-service'
+        path: '$(Pipeline.Workspace)/service'
+
+    - checkout: EKExtensions
+      path: 'ExtensionKit.Extensions'
+
+    - template: DeploymentResources/Jobs/deploy.component.yml@EKExtensions
+      parameters: 
+        ServiceConnection: ${{ parameters.ServiceConnection }}
+        AppServiceName: ${{ parameters.ExtensionsApiAppServiceName }}
+        ResourceGroupName: $(resourceGroupName)
+        ResourceGroupLocation: $(location)
+        ResourceFile: '$(Pipeline.Workspace)/resources/extensions-api-template.json'
+        Package: '$(Pipeline.Workspace)/service/U4.ExtensionKit.Extensions.WebApiV2.zip'
+        WorkingDirectory: "$(Pipeline.Workspace)/ExtensionKit.Extensions"
+        InstallContrast: '${{ parameters.InstallContrast }}'
+
+- job: DeployHibernation
+  displayName: 'Deploy Hibernation'
+  ${{ if ne(parameters.Dependency, '')}}:
+    dependsOn: ${{ parameters.Dependency }} 
+  ${{ if ne(parameters.Dependency, '')}}:
+    condition: succeeded('${{ parameters.Dependency }}')  
+
+  pool: 
+    vmImage: 'ubuntu-latest'
+
+  variables:
+  - template: DeploymentResources/resources/variables/vars.hibernation.yml@EKHibernation
+    parameters:
+      AppServiceName: "${{ parameters.HibernationApiAppServiceName }}"
+
+  steps:
+    - task: DownloadPipelineArtifact@2
+      displayName: 'Download resources files'
+      inputs:
+        source: 'current'
+        artifact: 'hibernation-resources'
+        path: '$(Pipeline.Workspace)/resources'
+
+    - task: DownloadPipelineArtifact@2
+      displayName: 'Download services files'
+      inputs:
+        source: 'current'
+        artifact: 'hibernation-service'
+        path: '$(Pipeline.Workspace)/service'
+
+    - checkout: EKHibernation
+      path: 'ExtensionKit.HibernationService'
+
+    - template: DeploymentResources/jobs/deploy.components.yml@EKHibernation
+      parameters: 
+        ServiceConnection: ${{ parameters.ServiceConnection }}
+        AppServiceName: ${{ parameters.HibernationApiAppServiceName }}
+        FunctionName: ${{ parameters.HibernationFunctionName }}
+        ResourceGroupName: $(resourceGroupName)
+        ResourceGroupLocation: $(location)
+        WorkingDirectory: "$(Pipeline.Workspace)/ExtensionKit.HibernationService"
+        InstallContrast: '${{ parameters.InstallContrast }}'
+
+- job: DeployPublicAPI
+  displayName: 'Deploy Public API'
+  ${{ if ne(parameters.Dependency, '')}}:
+    dependsOn: ${{ parameters.Dependency }} 
+  ${{ if ne(parameters.Dependency, '')}}:
+    condition: succeeded('${{ parameters.Dependency }}')
+
+  pool: 
+    vmImage: 'windows-latest'
+
+  variables:
+  - template: DeploymentResources/resources/variables/vars.public-api.yml@EKPublicAPI
+    parameters:
+      AppServiceName: "${{ parameters.PublicApiAppServiceName }}"
+
+  steps:
+    - task: DownloadPipelineArtifact@2
+      displayName: 'Download resources files'
+      inputs:
+        source: 'current'
+        artifact: 'public-api-resources'
+        path: '$(Pipeline.Workspace)/resources'
+
+    - task: DownloadPipelineArtifact@2
+      displayName: 'Download services files'
+      inputs:
+        source: 'current'
+        artifact: 'public-api-service'
+        path: '$(Pipeline.Workspace)/service'
+
+    - checkout: EKPublicAPI
+      path: 'ExtensionsKit.API'
+
+    - template: DeploymentResources/jobs/deploy.component.yml@EKPublicAPI
+      parameters: 
+        ServiceConnection: ${{ parameters.ServiceConnection }}
+        AppServiceName: ${{ parameters.PublicApiAppServiceName }}
+        ResourceGroupName: $(resourceGroupName)
+        ResourceGroupLocation: $(location)
+        WorkingDirectory: "$(Pipeline.Workspace)/ExtensionsKit.API"
+        InstallContrast: '${{ parameters.InstallContrast }}'

@@ -1,0 +1,64 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "keyVaultName": {
+            "type": "string"
+        },
+        "idsKeyVaultName": {
+            "type": "string"
+        },
+        "servicePrincipalID": {
+            "type": "string"
+        },
+        "u4costId": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "keyVaultExists": {
+            "type": "bool",
+            "defaultValue": false
+        }
+    },
+    "variables": {
+        "tenantId": "[subscription().tenantId]"
+    },
+    "resources": [
+        {
+            "condition": "[not(equals(parameters('keyVaultName'), parameters('idsKeyVaultName')))]",
+            "type": "Microsoft.KeyVault/vaults",
+            "apiVersion": "2016-10-01",
+            "name": "[parameters('keyVaultName')]",
+            "location": "[resourceGroup().location]",
+            "tags": {
+                "U4COSTID": "[parameters('u4costId')]"
+            },
+            "properties": {
+                "sku": {
+                    "family": "A",
+                    "name": "standard"
+                },
+                "tenantId": "[variables('tenantId')]",
+                "enabledForDeployment": true,
+                "enabledForDiskEncryption": false,
+                "enabledForTemplateDeployment": true,
+                "enableSoftDelete": true,
+                "accessPolicies": [
+                    {
+                        "tenantId": "[variables('tenantId')]",
+                        "objectId": "[parameters('servicePrincipalID')]",
+                        "permissions": {
+                            "keys": [],
+                            "secrets": [
+                                "get",
+                                "list",
+                                "set"
+                            ]
+                        }
+                    }
+                ],
+                "createMode": "[if(parameters('keyVaultExists'),'recover', 'create')]"
+            }
+        }
+    ]
+}

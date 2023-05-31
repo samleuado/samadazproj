@@ -1,0 +1,87 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "serviceName": {
+            "type": "string",
+            "metadata": {
+                "desciption": "Service name"
+            }
+        },
+        "webhookApiVersion": {
+            "type": "string",
+            "defaultValue": "v2",
+            "metadata": {
+                "description": "Webhook API Version"
+            }
+        },
+        "ekInternalEventGridKey": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Event grid subscriber internal access key"
+            }
+        },
+        "eventDeadLetterContainer": {
+            "type": "string",
+            "defaultValue": "event-dead-letter-storage",
+            "metadata": {
+                "description": "Container name for events dead lettering"
+            }
+        },
+        "customDomain": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Custom domain"
+            }
+        },
+        "customServiceName": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Custom Service Name used for regional paired services"
+            }
+        }
+    },
+    "variables": {
+        "location": "[resourceGroup().location]",
+        "subscriptionName": "[concat(parameters('serviceName'), '/Microsoft.EventGrid/', parameters('serviceName'), '-http-webhook-v2')]",
+        "urlDomain": "[if(empty(parameters('customDomain')), 'azurewebsites.net', parameters('customDomain'))]",
+        "customServiceNameUrl": "[if(empty(parameters('customServiceName')), parameters('serviceName'), parameters('customServiceName'))]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.EventGrid/topics/providers/eventSubscriptions",
+            "apiVersion": "2019-06-01",
+            "name": "[variables('subscriptionName')]",
+            "location": "[variables('location')]",
+            "properties": {
+                "eventDeliverySchema": "CloudEventSchemaV1_0",
+                "destination": {
+                    "endpointType": "WebHook",
+                    "properties": {
+                        "endpointUrl": "[concat('https://', variables('customServiceNameUrl'), '-trigger-http-webhook-v2.', variables('urlDomain'), '/api/', parameters('webhookApiVersion'), '/trigger-config/http-webhook?key=', parameters('ekInternalEventGridKey'))]"
+                    }
+                },
+                "filter": {
+                    "includedEventTypes": [
+                        "NewTriggerConfig",
+                        "DeletedTriggerConfig"
+                    ],
+                    "subjectEndsWith": "/http-webhook/2"
+                },
+                "retryPolicy": {
+                    "maxDeliveryAttempts": 30,
+                    "eventTimeToLiveInMinutes": 1440
+                },
+                "deadLetterDestination": {
+                    "endpointType": "StorageBlob",
+                    "properties": {
+                        "blobContainerName": "[parameters('eventDeadLetterContainer')]",
+                        "resourceId": "[resourceId('Microsoft.Storage/storageAccounts', replace(parameters('serviceName'),'-',''))]"
+                    }
+                }
+            }
+        }
+    ]
+}

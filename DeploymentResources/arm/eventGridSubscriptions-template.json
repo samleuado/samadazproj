@@ -1,0 +1,1139 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "artifactsContainerUri": {
+            "type": "string",
+            "metadata": {
+                "description": "Uri for the Blob containing the deployment artifacts"
+            }
+        },
+        "sharedArtifactsVersion": {
+            "type": "string",
+            "metadata": {
+                "description": "Version (build id) that identifies the shared deployment artifacts version to use"
+            }
+        },
+        "artifactsContainerSasToken": {
+            "type": "string",
+            "metadata": {
+                "description": "SAS Token to access the Blob storage containing the deployment artifacts"
+            }
+        },
+        "serviceName": {
+            "type": "string",
+            "metadata": {
+                "desciption": "Service name"
+            }
+        },
+        "customDomain": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Custom domain"
+            }
+        },
+        "webhookV2ApiVersion": {
+            "type": "string",
+            "defaultValue": "v2",
+            "metadata": {
+                "description": "Http Webhook V2 API Version"
+            }
+        },
+        "keyVaultSubscription": {
+            "type": "string",
+            "metadata": {
+                "description": "Subscription ID for the Key Vault used"
+            }
+        },
+        "keyVaultResourceGroup": {
+            "type": "string",
+            "metadata": {
+                "description": "Resource group for the Key Vault used"
+            }
+        },
+        "keyVaultName": {
+            "type": "string",
+            "metadata": {
+                "description": "Key Vault name"
+            }
+        },
+        "customServiceName": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Custom Service Name used for regional paired services"
+            }
+        },
+        "isWandaAvailable": {
+            "type": "string",
+            "defaultValue": "yes",
+            "metadata": {
+                "description": "Wether DA services are available or not"
+            }
+        }
+    },
+    "variables": {
+        "linkedTemplatesUri": "[concat(parameters('artifactsContainerUri'), 'shared/', parameters('sharedArtifactsVersion'),'/')]",
+        "linkedExtensionsSubscriptionTemplateUri": "[concat(variables('linkedTemplatesUri'), 'eventGridExtensionsSubscription.json', parameters('artifactsContainerSasToken'))]",
+        "linkedHttpWebhookV2SubscriptionTemplateUri":"[concat(variables('linkedTemplatesUri'), 'eventGridHttpWebhookV2Subscription.json', parameters('artifactsContainerSasToken'))]",
+        "linkedMessageHubTriggerSubscriptionTemplateUri":"[concat(variables('linkedTemplatesUri'), 'eventGridMessageHubTriggerSubscription.json', parameters('artifactsContainerSasToken'))]",
+        "linkedSchedulerTriggerSubscriptionTemplateUri":"[concat(variables('linkedTemplatesUri'), 'eventGridSchedulerTriggerSubscription.json', parameters('artifactsContainerSasToken'))]",
+        "linkedThresholdExceededSubscriptionTemplateUri": "[concat(variables('linkedTemplatesUri'), 'eventGridThresholdExceededSubscription.json', parameters('artifactsContainerSasToken'))]"
+    },
+  "resources": [
+    {
+      "apiVersion": "2021-04-01",
+      "name": "TenantThresholdNotificationSubscription",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('linkedThresholdExceededSubscriptionTemplateUri')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "ekInternalEventGridKey": {
+            "reference": {
+              "keyVault": {
+                "id": "[concat('/subscriptions/', parameters('keyVaultSubscription'), '/resourceGroups/', parameters('keyVaultResourceGroup'),'/providers/Microsoft.KeyVault/vaults/', parameters('keyVaultName'))]"
+              },
+              "secretName": "[concat(parameters('serviceName'), '-internal-eventgrid-secret')]"
+            }
+          },
+          "serviceName": {
+            "value": "[parameters('serviceName')]"
+          },
+          "customDomain": {
+            "value": "[parameters('customDomain')]"
+          },
+          "customServiceName": {
+            "value": "[parameters('customServiceName')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2021-04-01",
+      "name": "HttpWebhookV2Subscription",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('linkedHttpWebhookV2SubscriptionTemplateUri')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "ekInternalEventGridKey": {
+            "reference": {
+              "keyVault": {
+                "id": "[concat('/subscriptions/', parameters('keyVaultSubscription'), '/resourceGroups/', parameters('keyVaultResourceGroup'),'/providers/Microsoft.KeyVault/vaults/', parameters('keyVaultName'))]"
+              },
+              "secretName": "[concat(parameters('serviceName'), '-internal-eventgrid-secret')]"
+            }
+          },
+          "serviceName": {
+            "value": "[parameters('serviceName')]"
+          },
+          "customDomain": {
+            "value": "[parameters('customDomain')]"
+          },
+          "webhookApiVersion": {
+            "value": "[parameters('webhookV2ApiVersion')]"
+          },
+          "customServiceName": {
+            "value": "[parameters('customServiceName')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2021-04-01",
+      "name": "MessageHubTriggerSubscription",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('linkedMessageHubTriggerSubscriptionTemplateUri')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "ekInternalEventGridKey": {
+            "reference": {
+              "keyVault": {
+                "id": "[concat('/subscriptions/', parameters('keyVaultSubscription'), '/resourceGroups/', parameters('keyVaultResourceGroup'),'/providers/Microsoft.KeyVault/vaults/', parameters('keyVaultName'))]"
+              },
+              "secretName": "[concat(parameters('serviceName'), '-internal-eventgrid-secret')]"
+            }
+          },
+          "serviceName": {
+            "value": "[parameters('serviceName')]"
+          },
+          "customDomain": {
+            "value": "[parameters('customDomain')]"
+          },
+          "customServiceName": {
+            "value": "[parameters('customServiceName')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2021-04-01",
+      "name": "SchedulerTriggerSubscription",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('linkedSchedulerTriggerSubscriptionTemplateUri')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "ekInternalEventGridKey": {
+            "reference": {
+              "keyVault": {
+                "id": "[concat('/subscriptions/', parameters('keyVaultSubscription'), '/resourceGroups/', parameters('keyVaultResourceGroup'),'/providers/Microsoft.KeyVault/vaults/', parameters('keyVaultName'))]"
+              },
+              "secretName": "[concat(parameters('serviceName'), '-internal-eventgrid-secret')]"
+            }
+          },
+          "serviceName": {
+            "value": "[parameters('serviceName')]"
+          },
+          "customDomain": {
+            "value": "[parameters('customDomain')]"
+          },
+          "customServiceName": {
+            "value": "[parameters('customServiceName')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2021-04-01",
+      "name": "XmlParserSubscription",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('linkedExtensionsSubscriptionTemplateUri')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "serviceName": {
+            "value": "[parameters('serviceName')]"
+          },
+          "extensionName": {
+            "value": "XmlParse"
+          },
+          "extensionType": {
+            "value": "xml-parse"
+          },
+          "extensionVersion": {
+            "value": 1
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2021-04-01",
+      "name": "JsonParserSubscription",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('linkedExtensionsSubscriptionTemplateUri')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "serviceName": {
+            "value": "[parameters('serviceName')]"
+          },
+          "extensionName": {
+            "value": "JsonParse"
+          },
+          "extensionType": {
+            "value": "json-parse"
+          },
+          "extensionVersion": {
+            "value": 2
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2021-04-01",
+      "name": "ForEachSubscription",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('linkedExtensionsSubscriptionTemplateUri')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "serviceName": {
+            "value": "[parameters('serviceName')]"
+          },
+          "extensionName": {
+            "value": "ForEach"
+          },
+          "extensionType": {
+            "value": "for-each"
+          },
+          "extensionVersion": {
+            "value": 1
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2021-04-01",
+      "name": "EventGridPublishSubscription",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "TenantThresholdNotificationSubscription",
+        "HttpWebhookV2Subscription",
+        "MessageHubTriggerSubscription",
+        "SchedulerTriggerSubscription",
+        "XmlParserSubscription",
+        "JsonParserSubscription",
+        "ForEachSubscription"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('linkedExtensionsSubscriptionTemplateUri')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "serviceName": {
+            "value": "[parameters('serviceName')]"
+          },
+          "extensionName": {
+            "value": "EventGridPublish"
+          },
+          "extensionType": {
+            "value": "event-grid-publish"
+          },
+          "extensionVersion": {
+            "value": 1
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2021-04-01",
+      "name": "StopSubscription",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "TenantThresholdNotificationSubscription",
+        "HttpWebhookV2Subscription",
+        "MessageHubTriggerSubscription",
+        "SchedulerTriggerSubscription",
+        "XmlParserSubscription",
+        "JsonParserSubscription",
+        "ForEachSubscription"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('linkedExtensionsSubscriptionTemplateUri')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "serviceName": {
+            "value": "[parameters('serviceName')]"
+          },
+          "extensionName": {
+            "value": "Stop"
+          },
+          "extensionType": {
+            "value": "stop"
+          },
+          "extensionVersion": {
+            "value": 1
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2021-04-01",
+      "name": "HttpRequestSubscription",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "TenantThresholdNotificationSubscription",
+        "HttpWebhookV2Subscription",
+        "MessageHubTriggerSubscription",
+        "SchedulerTriggerSubscription",
+        "XmlParserSubscription",
+        "JsonParserSubscription",
+        "ForEachSubscription"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('linkedExtensionsSubscriptionTemplateUri')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "serviceName": {
+            "value": "[parameters('serviceName')]"
+          },
+          "extensionName": {
+            "value": "HttpRequest"
+          },
+          "extensionType": {
+            "value": "http-request"
+          },
+          "extensionVersion": {
+            "value": 1
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2021-04-01",
+      "name": "Unit4IdResolverSubscription",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "TenantThresholdNotificationSubscription",
+        "HttpWebhookV2Subscription",
+        "MessageHubTriggerSubscription",
+        "SchedulerTriggerSubscription",
+        "XmlParserSubscription",
+        "JsonParserSubscription",
+        "ForEachSubscription"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('linkedExtensionsSubscriptionTemplateUri')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "serviceName": {
+            "value": "[parameters('serviceName')]"
+          },
+          "extensionName": {
+            "value": "Unit4IdResolver"
+          },
+          "extensionType": {
+            "value": "u4id-resolver"
+          },
+          "extensionVersion": {
+            "value": 1
+          }
+        }
+      }
+    },
+    {
+      "condition": "[equals(parameters('isWandaAvailable'), 'yes')]",
+      "apiVersion": "2021-04-01",
+      "name": "DaPushTextSubscription",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "TenantThresholdNotificationSubscription",
+        "HttpWebhookV2Subscription",
+        "MessageHubTriggerSubscription",
+        "SchedulerTriggerSubscription",
+        "XmlParserSubscription",
+        "JsonParserSubscription",
+        "ForEachSubscription"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('linkedExtensionsSubscriptionTemplateUri')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "serviceName": {
+            "value": "[parameters('serviceName')]"
+          },
+          "extensionName": {
+            "value": "DaPushText"
+          },
+          "extensionType": {
+            "value": "da-push-text"
+          },
+          "extensionVersion": {
+            "value": 1
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2021-04-01",
+      "name": "MessageHubActorSubscription",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "TenantThresholdNotificationSubscription",
+        "HttpWebhookV2Subscription",
+        "MessageHubTriggerSubscription",
+        "SchedulerTriggerSubscription",
+        "XmlParserSubscription",
+        "JsonParserSubscription",
+        "ForEachSubscription"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('linkedExtensionsSubscriptionTemplateUri')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "serviceName": {
+            "value": "[parameters('serviceName')]"
+          },
+          "extensionName": {
+            "value": "MessageHubActor"
+          },
+          "extensionType": {
+            "value": "mh-genactor"
+          },
+          "extensionVersion": {
+            "value": 1
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2021-04-01",
+      "name": "MessageHubEventSubscription",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "TenantThresholdNotificationSubscription",
+        "HttpWebhookV2Subscription",
+        "MessageHubTriggerSubscription",
+        "SchedulerTriggerSubscription",
+        "XmlParserSubscription",
+        "JsonParserSubscription",
+        "ForEachSubscription"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('linkedExtensionsSubscriptionTemplateUri')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "serviceName": {
+            "value": "[parameters('serviceName')]"
+          },
+          "extensionName": {
+            "value": "MessageHubEvent"
+          },
+          "extensionType": {
+            "value": "mh-event-action"
+          },
+          "extensionVersion": {
+            "value": 1
+          }
+        }
+      }
+    },
+    {
+      "condition": "[equals(parameters('isWandaAvailable'), 'yes')]",
+      "apiVersion": "2021-04-01",
+      "name": "DaPushTravelRequestSubscription",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "TenantThresholdNotificationSubscription",
+        "HttpWebhookV2Subscription",
+        "MessageHubTriggerSubscription",
+        "SchedulerTriggerSubscription",
+        "XmlParserSubscription",
+        "JsonParserSubscription",
+        "ForEachSubscription"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('linkedExtensionsSubscriptionTemplateUri')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "serviceName": {
+            "value": "[parameters('serviceName')]"
+          },
+          "extensionName": {
+            "value": "DaPushTravelRequest"
+          },
+          "extensionType": {
+            "value": "da-push-travelrequest"
+          },
+          "extensionVersion": {
+            "value": 1
+          }
+        }
+      }
+    },
+    {
+      "condition": "[equals(parameters('isWandaAvailable'), 'yes')]",
+      "apiVersion": "2021-04-01",
+      "name": "DaQuestionSubscription",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "TenantThresholdNotificationSubscription",
+        "HttpWebhookV2Subscription",
+        "MessageHubTriggerSubscription",
+        "SchedulerTriggerSubscription",
+        "XmlParserSubscription",
+        "JsonParserSubscription",
+        "ForEachSubscription"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('linkedExtensionsSubscriptionTemplateUri')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "serviceName": {
+            "value": "[parameters('serviceName')]"
+          },
+          "extensionName": {
+            "value": "DaQuestion"
+          },
+          "extensionType": {
+            "value": "da-question"
+          },
+          "extensionVersion": {
+            "value": 1
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2021-04-01",
+      "name": "EmailActionSubscription",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "TenantThresholdNotificationSubscription",
+        "HttpWebhookV2Subscription",
+        "MessageHubTriggerSubscription",
+        "SchedulerTriggerSubscription",
+        "XmlParserSubscription",
+        "JsonParserSubscription",
+        "ForEachSubscription"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('linkedExtensionsSubscriptionTemplateUri')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "serviceName": {
+            "value": "[parameters('serviceName')]"
+          },
+          "extensionName": {
+            "value": "Email"
+          },
+          "extensionType": {
+            "value": "email"
+          },
+          "extensionVersion": {
+            "value": 1
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2021-04-01",
+      "name": "SftpListActionSubscription",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "EventGridPublishSubscription",
+        "StopSubscription",
+        "HttpRequestSubscription",
+        "Unit4IdResolverSubscription",
+        "DaPushTextSubscription",
+        "MessageHubActorSubscription",
+        "MessageHubEventSubscription",
+        "DaPushTravelRequestSubscription",
+        "DaQuestionSubscription",
+        "EmailActionSubscription"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('linkedExtensionsSubscriptionTemplateUri')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "serviceName": {
+            "value": "[parameters('serviceName')]"
+          },
+          "extensionName": {
+            "value": "SftpList"
+          },
+          "extensionType": {
+            "value": "sftp-list"
+          },
+          "extensionVersion": {
+            "value": 1
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2021-04-01",
+      "name": "SftpGetContentActionSubscription",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "EventGridPublishSubscription",
+        "StopSubscription",
+        "HttpRequestSubscription",
+        "Unit4IdResolverSubscription",
+        "DaPushTextSubscription",
+        "MessageHubActorSubscription",
+        "MessageHubEventSubscription",
+        "DaPushTravelRequestSubscription",
+        "DaQuestionSubscription",
+        "EmailActionSubscription"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('linkedExtensionsSubscriptionTemplateUri')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "serviceName": {
+            "value": "[parameters('serviceName')]"
+          },
+          "extensionName": {
+            "value": "SftpGetContent"
+          },
+          "extensionType": {
+            "value": "sftp-get-content"
+          },
+          "extensionVersion": {
+            "value": 1
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2021-04-01",
+      "name": "SftpDeleteActionSubscription",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "EventGridPublishSubscription",
+        "StopSubscription",
+        "HttpRequestSubscription",
+        "Unit4IdResolverSubscription",
+        "DaPushTextSubscription",
+        "MessageHubActorSubscription",
+        "MessageHubEventSubscription",
+        "DaPushTravelRequestSubscription",
+        "DaQuestionSubscription",
+        "EmailActionSubscription"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('linkedExtensionsSubscriptionTemplateUri')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "serviceName": {
+            "value": "[parameters('serviceName')]"
+          },
+          "extensionName": {
+            "value": "SftpDelete"
+          },
+          "extensionType": {
+            "value": "sftp-delete"
+          },
+          "extensionVersion": {
+            "value": 1
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2021-04-01",
+      "name": "SftpCreateActionSubscription",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "EventGridPublishSubscription",
+        "StopSubscription",
+        "HttpRequestSubscription",
+        "Unit4IdResolverSubscription",
+        "DaPushTextSubscription",
+        "MessageHubActorSubscription",
+        "MessageHubEventSubscription",
+        "DaPushTravelRequestSubscription",
+        "DaQuestionSubscription",
+        "EmailActionSubscription"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('linkedExtensionsSubscriptionTemplateUri')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "serviceName": {
+            "value": "[parameters('serviceName')]"
+          },
+          "extensionName": {
+            "value": "SftpCreate"
+          },
+          "extensionType": {
+            "value": "sftp-create"
+          },
+          "extensionVersion": {
+            "value": 1
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2021-04-01",
+      "name": "XsltSubscription",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "EventGridPublishSubscription",
+        "StopSubscription",
+        "HttpRequestSubscription",
+        "Unit4IdResolverSubscription",
+        "DaPushTextSubscription",
+        "MessageHubActorSubscription",
+        "MessageHubEventSubscription",
+        "DaPushTravelRequestSubscription",
+        "DaQuestionSubscription",
+        "EmailActionSubscription"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('linkedExtensionsSubscriptionTemplateUri')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "serviceName": {
+            "value": "[parameters('serviceName')]"
+          },
+          "extensionName": {
+            "value": "XsltTransformation"
+          },
+          "extensionType": {
+            "value": "xslt-transformation"
+          },
+          "extensionVersion": {
+            "value": 1
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2021-04-01",
+      "name": "Xslt3Subscription",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "EventGridPublishSubscription",
+        "StopSubscription",
+        "HttpRequestSubscription",
+        "Unit4IdResolverSubscription",
+        "DaPushTextSubscription",
+        "MessageHubActorSubscription",
+        "MessageHubEventSubscription",
+        "DaPushTravelRequestSubscription",
+        "DaQuestionSubscription",
+        "EmailActionSubscription"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('linkedExtensionsSubscriptionTemplateUri')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "serviceName": {
+            "value": "[parameters('serviceName')]"
+          },
+          "extensionName": {
+            "value": "Xslt3Transformation"
+          },
+          "extensionType": {
+            "value": "xslt3-transformation"
+          },
+          "extensionVersion": {
+            "value": 1
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2021-04-01",
+      "name": "JsonToXmlSubscription",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "EventGridPublishSubscription",
+        "StopSubscription",
+        "HttpRequestSubscription",
+        "Unit4IdResolverSubscription",
+        "DaPushTextSubscription",
+        "MessageHubActorSubscription",
+        "MessageHubEventSubscription",
+        "DaPushTravelRequestSubscription",
+        "DaQuestionSubscription",
+        "EmailActionSubscription"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('linkedExtensionsSubscriptionTemplateUri')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "serviceName": {
+            "value": "[parameters('serviceName')]"
+          },
+          "extensionName": {
+            "value": "JsonToXml"
+          },
+          "extensionType": {
+            "value": "json-to-xml"
+          },
+          "extensionVersion": {
+            "value": 1
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2021-04-01",
+      "name": "PgpEncryptSubscription",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "EventGridPublishSubscription",
+        "StopSubscription",
+        "HttpRequestSubscription",
+        "Unit4IdResolverSubscription",
+        "DaPushTextSubscription",
+        "MessageHubActorSubscription",
+        "MessageHubEventSubscription",
+        "DaPushTravelRequestSubscription",
+        "DaQuestionSubscription",
+        "EmailActionSubscription"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('linkedExtensionsSubscriptionTemplateUri')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "serviceName": {
+            "value": "[parameters('serviceName')]"
+          },
+          "extensionName": {
+            "value": "PgpEncrypt"
+          },
+          "extensionType": {
+            "value": "pgp-encrypt"
+          },
+          "extensionVersion": {
+            "value": 1
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2021-04-01",
+      "name": "PgpDecryptSubscription",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "EventGridPublishSubscription",
+        "StopSubscription",
+        "HttpRequestSubscription",
+        "Unit4IdResolverSubscription",
+        "DaPushTextSubscription",
+        "MessageHubActorSubscription",
+        "MessageHubEventSubscription",
+        "DaPushTravelRequestSubscription",
+        "DaQuestionSubscription",
+        "EmailActionSubscription"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('linkedExtensionsSubscriptionTemplateUri')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "serviceName": {
+            "value": "[parameters('serviceName')]"
+          },
+          "extensionName": {
+            "value": "PgpDecrypt"
+          },
+          "extensionType": {
+            "value": "pgp-decrypt"
+          },
+          "extensionVersion": {
+            "value": 1
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2021-04-01",
+      "name": "SignXmlSubscription",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "EventGridPublishSubscription",
+        "StopSubscription",
+        "HttpRequestSubscription",
+        "Unit4IdResolverSubscription",
+        "DaPushTextSubscription",
+        "MessageHubActorSubscription",
+        "MessageHubEventSubscription",
+        "DaPushTravelRequestSubscription",
+        "DaQuestionSubscription",
+        "EmailActionSubscription"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('linkedExtensionsSubscriptionTemplateUri')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "serviceName": {
+            "value": "[parameters('serviceName')]"
+          },
+          "extensionName": {
+            "value": "SignXml"
+          },
+          "extensionType": {
+            "value": "sign-xml"
+          },
+          "extensionVersion": {
+            "value": 1
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2021-04-01",
+      "name": "VerifyXmlSubscription",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "SftpListActionSubscription",
+        "SftpGetContentActionSubscription",
+        "SftpDeleteActionSubscription",
+        "SftpCreateActionSubscription",
+        "XsltSubscription",
+        "Xslt3Subscription",
+        "JsonToXmlSubscription",
+        "PgpEncryptSubscription",
+        "PgpDecryptSubscription",
+        "SignXmlSubscription"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('linkedExtensionsSubscriptionTemplateUri')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "serviceName": {
+            "value": "[parameters('serviceName')]"
+          },
+          "extensionName": {
+            "value": "VerifyXml"
+          },
+          "extensionType": {
+            "value": "verify-xml"
+          },
+          "extensionVersion": {
+            "value": 1
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2021-04-01",
+      "name": "XmlEncryptSubscription",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "SftpListActionSubscription",
+        "SftpGetContentActionSubscription",
+        "SftpDeleteActionSubscription",
+        "SftpCreateActionSubscription",
+        "XsltSubscription",
+        "Xslt3Subscription",
+        "JsonToXmlSubscription",
+        "PgpEncryptSubscription",
+        "PgpDecryptSubscription",
+        "SignXmlSubscription"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('linkedExtensionsSubscriptionTemplateUri')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "serviceName": {
+            "value": "[parameters('serviceName')]"
+          },
+          "extensionName": {
+            "value": "XmlEncrypt"
+          },
+          "extensionType": {
+            "value": "xml-encrypt"
+          },
+          "extensionVersion": {
+            "value": 1
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2021-04-01",
+      "name": "XmlDecryptSubscription",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "SftpListActionSubscription",
+        "SftpGetContentActionSubscription",
+        "SftpDeleteActionSubscription",
+        "SftpCreateActionSubscription",
+        "XsltSubscription",
+        "Xslt3Subscription",
+        "JsonToXmlSubscription",
+        "PgpEncryptSubscription",
+        "PgpDecryptSubscription",
+        "SignXmlSubscription"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('linkedExtensionsSubscriptionTemplateUri')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "serviceName": {
+            "value": "[parameters('serviceName')]"
+          },
+          "extensionName": {
+            "value": "XmlDecrypt"
+          },
+          "extensionType": {
+            "value": "xml-decrypt"
+          },
+          "extensionVersion": {
+            "value": 1
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {}
+}

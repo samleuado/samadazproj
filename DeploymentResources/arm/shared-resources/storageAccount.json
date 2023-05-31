@@ -1,0 +1,258 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "resourceName": {
+      "type": "string",
+      "metadata": {
+        "description": "Extensions Kit Storage Account resource name"
+      }
+    },
+    "storageAccountSkuReplication": {
+      "type": "string",
+      "metadata": {
+        "description": "Storage Account replication"
+      }
+    },
+    "storageAccountSkuTier": {
+      "type": "string",
+      "defaultValue": "Standard",
+      "metadata": {
+        "description": "Storage Account tier"
+      }
+    },
+    "storageAccountBlobEncryptionEnabled": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Enable or disable Blob encryption at Rest"
+      }
+    },
+    "eventDeadLetterContainer": {
+      "type": "string",
+      "defaultValue": "event-dead-letter-storage",
+      "metadata": {
+        "description": "Container name for events dead lettering"
+      }
+    },
+    "flowEventsContainer": {
+      "type": "string",
+      "metadata": {
+        "description": "Container name for flow events storage"
+      }
+    },
+    "addStorageAccount": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "u4costId": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "workspaceName": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "workspaceRg": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "enableDiagnosticSettings": {
+      "type": "string",
+      "defaultValue": "no",
+      "allowedValues": [
+        "yes",
+        "no"
+      ]
+    }
+  },
+
+  "variables": {
+    "location": "[resourceGroup().location]",
+    "resourceName": "[replace(parameters('resourceName'), '-', '')]",
+    "workspaceId": "[resourceId(parameters('workspaceRg'), 'Microsoft.OperationalInsights/workspaces', parameters('workspaceName'))]"
+  },
+
+  "resources": [
+    {
+      "condition": "[equals(parameters('addStorageAccount'), 'yes')]",
+      "apiVersion": "2019-04-01",
+      "type": "Microsoft.Storage/storageAccounts",
+      "kind": "StorageV2",
+      "name": "[variables('resourceName')]",
+      "location": "[variables('location')]",
+      "dependsOn": [],
+      "sku": {
+        "name": "[parameters('storageAccountSkuReplication')]",
+        "tier": "[parameters('storageAccountSkuTier')]"
+      },
+      "tags": {
+        "U4COSTID": "[parameters('u4costId')]"
+      },
+      "scale": null,
+      "properties": {
+        "supportsHttpsTrafficOnly": true,
+        "allowBlobPublicAccess": false,
+        "encryption": {
+          "keySource": "Microsoft.Storage",
+          "services": {
+            "blob": {
+              "enabled": "[parameters('storageAccountBlobEncryptionEnabled')]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "condition": "[equals(parameters('enableDiagnosticSettings'), 'yes')]",
+      "type": "Microsoft.Insights/diagnosticSettings",
+      "apiVersion": "2021-05-01-preview",
+      "name": "[parameters('resourceName')]",
+      "scope": "[format('Microsoft.Storage/storageAccounts/{0}', variables('resourceName'))]",
+      "properties": {
+        "workspaceId": "[variables('workspaceId')]",
+        "storageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', variables('resourceName'))]",
+        "metrics": [
+          {
+            "category": "Transaction",
+            "enabled": true
+          }
+        ]
+      }
+    },
+    {
+      "condition": "[equals(parameters('enableDiagnosticSettings'), 'yes')]",
+      "type": "Microsoft.Insights/diagnosticSettings",
+      "apiVersion": "2021-05-01-preview",
+      "name": "[parameters('resourceName')]",
+      "scope": "[format('Microsoft.Storage/storageAccounts/{0}/blobServices/default', variables('resourceName'))]",
+      "properties": {
+        "workspaceId": "[variables('workspaceId')]",
+        "storageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', variables('resourceName'))]",
+        "logs": [
+          {
+            "category": "StorageRead",
+            "enabled": true
+          },
+          {
+            "category": "StorageWrite",
+            "enabled": true
+          },
+          {
+            "category": "StorageDelete",
+            "enabled": true
+          }
+        ],
+        "metrics": [
+          {
+            "category": "Transaction",
+            "enabled": true
+          }
+        ]
+      }
+    },
+    {
+      "condition": "[equals(parameters('enableDiagnosticSettings'), 'yes')]",
+      "type": "Microsoft.Insights/diagnosticSettings",
+      "apiVersion": "2021-05-01-preview",
+      "name": "[parameters('resourceName')]",
+      "scope": "[format('Microsoft.Storage/storageAccounts/{0}/queueServices/default', variables('resourceName'))]",
+      "properties": {
+        "workspaceId": "[variables('workspaceId')]",
+        "storageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', variables('resourceName'))]",
+        "logs": [
+          {
+            "category": "StorageRead",
+            "enabled": true
+          },
+          {
+            "category": "StorageWrite",
+            "enabled": true
+          },
+          {
+            "category": "StorageDelete",
+            "enabled": true
+          }
+        ],
+        "metrics": [
+          {
+            "category": "Transaction",
+            "enabled": true
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+      "apiVersion": "2019-04-01",
+      "dependsOn": [ "[parameters('resourceName')]" ],
+      "name": "[concat(variables('resourceName'), '/default/', parameters('flowEventsContainer'))]"
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+      "apiVersion": "2019-04-01",
+      "dependsOn": [ "[parameters('resourceName')]" ],
+      "name": "[concat(variables('resourceName'), '/default/', parameters('eventDeadLetterContainer'))]"
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+      "apiVersion": "2019-04-01",
+      "dependsOn": [ "[parameters('resourceName')]" ],
+      "name": "[concat(variables('resourceName'), '/default/', 'internal-event-storage')]"
+    },
+    {
+      "name": "[concat(variables('resourceName'), '/default')]",
+      "type": "Microsoft.Storage/storageAccounts/managementPolicies",
+      "apiVersion": "2019-04-01",
+      "dependsOn": [ "[parameters('resourceName')]" ],
+      "properties": {
+        "policy": {
+          "rules": [
+            {
+              "name": "Internal event storage blob lifecyle",
+              "enabled": true,
+              "type": "Lifecycle",
+              "definition": {
+                "filters": {
+                  "blobTypes": [ "blockBlob" ],
+                  "prefixMatch": [ "internal-event-storage" ]
+                },
+                "actions": {
+                  "baseBlob": {
+                    "delete": {
+                      "daysAfterModificationGreaterThan": 2
+                    }
+                  }
+                }
+              }
+			},
+            {
+              "name": "Flow events storage blob lifecyle",
+              "enabled": true,
+              "type": "Lifecycle",
+              "definition": {
+                "filters": {
+                  "blobTypes": [ "blockBlob" ],
+                  "prefixMatch": [ "[parameters('flowEventsContainer')]" ]
+                },
+                "actions": {
+                  "baseBlob": {
+                    "delete": {
+                      "daysAfterModificationGreaterThan": 90
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "storageAccountConnectionString": {
+      "type": "string",
+      "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('resourceName'), ';AccountKey=', listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('resourceName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value)]"
+    }
+  }
+}

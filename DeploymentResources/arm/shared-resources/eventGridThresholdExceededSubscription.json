@@ -1,0 +1,80 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "serviceName": {
+            "type": "string",
+            "metadata": {
+                "desciption": "Service name"
+            }
+        },   
+        "ekInternalEventGridKey": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Event grid subscriber internal access key"
+            }
+        },
+        "eventDeadLetterContainer": {
+            "type": "string",
+            "defaultValue": "event-dead-letter-storage",
+            "metadata": {
+                "description": "Container name for events dead lettering"
+            }
+        },
+        "customDomain": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Custom domain"
+            }
+        },
+        "customServiceName": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Custom Service Name used for regional paired services"
+            }
+        }
+    },
+    "variables": {
+        "location": "[resourceGroup().location]",
+        "subscriptionName": "[concat(parameters('serviceName'), '/Microsoft.EventGrid/', parameters('serviceName'), '-extensions-TenantThresholdNotificationFunction')]",
+        "urlDomain": "[if(empty(parameters('customDomain')), 'azurewebsites.net', parameters('customDomain'))]",
+        "customServiceNameUrl": "[if(empty(parameters('customServiceName')), parameters('serviceName'), parameters('customServiceName'))]",
+        "extensionFunctionAppUrl": "[concat('https://', variables('customServiceNameUrl'), '-flow-notification-function.', variables('urlDomain'))]",
+        "extensionWebhook": "[concat(variables('extensionFunctionAppUrl'), '/api/TenantThresholdNotificationFunction?key=', parameters('ekInternalEventGridKey'))]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.EventGrid/topics/providers/eventSubscriptions",
+            "apiVersion": "2019-06-01",
+            "name": "[variables('subscriptionName')]",
+            "location": "[variables('location')]",
+            "properties": {
+                "eventDeliverySchema": "CloudEventSchemaV1_0",
+                "destination": {
+                    "endpointType": "WebHook",
+                    "properties": {
+                        "endpointUrl": "[variables('extensionWebhook')]"
+                    }
+                },
+                "filter": {
+                    "includedEventTypes": [
+                        "ThresholdExceeded"
+                    ]
+                },
+                "retryPolicy": {
+                    "maxDeliveryAttempts": 30,
+                    "eventTimeToLiveInMinutes": 1440
+                },
+                "deadLetterDestination": {
+                    "endpointType": "StorageBlob",
+                    "properties": {
+                        "blobContainerName": "[parameters('eventDeadLetterContainer')]",
+                        "resourceId": "[resourceId('Microsoft.Storage/storageAccounts', replace(parameters('serviceName'),'-',''))]"
+                    }
+                }
+            }
+        }
+    ]
+}

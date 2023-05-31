@@ -1,0 +1,339 @@
+variables:
+  - name: location
+    value: 'North Europe'
+
+  - name: locationShortcut
+    value: 'eun'
+
+  - name: isPrimaryEnvironment
+    value: true
+
+  - name: servicePrincipalID
+    value: 'f65a40a0-b794-4fd9-b17b-25bc46eb7aaa'
+    
+  - name: resourceGroupName
+    value: "u4ek-qa"
+
+  - name: serviceDomain
+    value: 'azurewebsites.net'
+
+  - name: noScaleServicePlan
+    value: 'u4ek-qa-no-scale'
+  
+  - name: noScaleServicePlanTier
+    value: 'B2'
+
+  - name: userQueriesServicePlan
+    value: 'u4ek-qa-user-queries'
+
+  - name: userQueriesServicePlanTier
+    value: 'B2'
+
+  - name: userQueriesServicePlanMaxInstances
+    value: '1'
+
+  - name: flowRuntimeServicePlan
+    value: 'u4ek-qa-flow-runtime'
+
+  - name: flowRuntimeServicePlanTier
+    value: 'B2'
+
+  - name: flowRuntimeServicePlanMaxInstances
+    value: '1'
+  
+  - name: consumptionServicePlan
+    value: 'u4ek-qa-consumption'  
+    
+  - name: enableDiagnostic
+    value: false
+
+  - name: applicationInsightsName
+    value: 'u4ek-qa'
+  
+  - name: appInsightsLocation
+    value: 'North Europe'
+
+  - name: workspaceResourceGroup
+    value: 'u4ek-resources'
+
+  - name: workspaceName
+    value: 'u4ek-log-analytics-workspace'
+
+  - name: keyVaultName
+    value: 'u4ek-qa'
+
+  - name: sharedKeyVaultName
+    value: 'u4ppsecrets'
+
+  - name: cosmosDbResourceGroup
+    value: 'u4ek-qa'
+
+  - name: cosmosDbName
+    value: 'u4ek-qa'
+
+  - name: cosmosDbSecondaryRegion
+    value: ''
+
+  - name: storageAccountResourceGroup
+    value: 'u4ek-qa'
+    
+  - name: storageAccountName
+    value: 'u4ekqa'
+
+  - name: storageAccountSkuReplication
+    value: 'Standard_LRS'
+
+  - name: eventGridTopicResourceGroup
+    value: 'u4ek-qa'
+    
+  - name: eventGridTopicName
+    value: 'u4ek-qa'
+
+  - name: redisResourceGroup
+    value: 'u4ek-qa'
+
+  - name: redisName
+    value: 'u4ek-qa'
+
+  - name: redisCacheSku
+    value: "Basic"
+
+  - name: redisCacheCapacity
+    value: 0
+
+  - name: apiManagementName
+    value: 'u4ek-qa-serverless-gateway'
+
+  - name: apiManagementWithCertificateName
+    value: 'u4ek-qa-serverless-mtls-gateway'
+
+  - name: enableMTLS
+    value: true
+    
+  - name: ekSourceSystem
+    value: 'u4ek-qa'
+
+  - name: ekAdminTenant
+    value: 'u4pp-sandbox-directory'
+
+  - name: ekAdminTenantName
+    value: 'Extensions Kit Admin Tenant'
+
+  - name: ekAdminTenantShortName
+    value: 'admin'
+
+  - name: ekAdminUserId
+    value: 'David Gonzalez Sola'
+
+  - name: ekAdminUserEmail
+    value: 'david.gonzalez.sola@unit4.com'
+
+  - name: ekAdminUserDisplayName
+    value: 'David Gonzalez Sola'
+
+  - name: ekAdminTenantLogoUrl
+    value: 'https://www.unit4.com/sites/default/files/images/logo.svg'
+
+  - name: emailSender
+    value: "no-reply-extensionkit@u4pp.com"  
+    
+  - name: emailDescription
+    value: "no-reply Extension Kit"
+
+  - name: emailKeySecretName
+    value: "u4pp-sendgrid-master-key"
+    
+  - name: azureFunctionKeySecretName
+    value: "u4ek-qa-azure-function-secret"
+  
+  - name: eventGridInternalKeySecretName
+    value: "u4ek-qa-internal-eventgrid-secret"
+
+  - name: idsKeyVaultName
+    value: 'u4ppsecrets'
+
+  - name: idsAdminUserName
+    value: 'u4ids-admin-client'
+
+  - name: idsAdminSecretName
+    value: 'u4ids-admin-client-secret-sandbox'
+
+  - name: idsBaseUrl
+    value: 'https://u4ids-sandbox.u4pp.com'
+
+  - name: idsUrl
+    value: 'https://u4ids-sandbox.u4pp.com/identity'
+
+  - name: ekInternalClientId
+    value: 'u4ek-qa-internal'
+
+  - name: ekPortalClientId
+    value: 'u4ek-qa-portal-pkce'
+
+  - name: ekProvisionerClientId
+    value: 'u4ek-qa-provisioner'
+
+  - name: ekDiscoClientId
+    value: 'u4ek-qa-disco'
+
+  - name: mhInstanceName
+    value: 'u4mh-dev'
+
+  - name: mhInstanceDomain
+    value: 'azurewebsites.net'
+    
+  - name: mhAccessProviderUrl
+    value: 'https://u4mh-dev-accessprovider.azurewebsites.net'
+
+  - name: mhManagerUrl
+    value: 'https://u4mh-dev-manager.azurewebsites.net'
+
+  - name: discoEnvironment
+    value: 'sandbox'
+        
+  - name: discoveryStageName
+    value: 'qa'
+
+  - name: discoveryServiceUrl
+    value: 'https://u4discovery-sandbox.u4pp.com/'
+  
+  - name: discoveryServiceIdsUrl
+    value: 'https://u4ids-sandbox.u4pp.com'
+
+  - name: amApiUrl
+    value: 'https://u4-am-sandbox.azurewebsites.net'
+
+  - name: daPushApiUrl
+    value: 'https://u4-da-push-dev-service.azurewebsites.net'
+
+  - name: instantUIApiUrl
+    value: 'https://u4nextsandbox-renderer.azurewebsites.net'
+
+  - name: portalUrl
+    value: 'https://u4ek-qa-portal.azurewebsites.net'
+
+  - name: tafUrl
+    value: 'https://u4ek-qa-taf.azurewebsites.net'
+
+  - name: extensionsApiUrl
+    value: 'https://u4ek-qa-extensions.azurewebsites.net'
+  
+  - name: ekApiUrl
+    value: 'https://u4ek-qa-api.azurewebsites.net'
+  
+  - name: hibernationApiUrl
+    value: 'https://u4ek-qa-hibernation.azurewebsites.net'
+
+  - name: tenantsApiUrl
+    value: 'https://u4ek-qa-tenants.azurewebsites.net'
+    
+  - name: tenantConsumptionUpdaterUrl
+    value: 'https://u4ek-qa-tenant-consumption-updater.azurewebsites.net'
+
+  - name: flowsApiUrl
+    value: 'https://u4ek-qa-flows.azurewebsites.net'
+
+  - name: flowNotificationUrl
+    value: 'https://u4ek-qa-flow-notification-function.azurewebsites.net'
+
+  - name: flowHistoryApiUrl
+    value: 'https://u4ek-qa-flowhistory.azurewebsites.net'
+
+  - name: ekInvitationSenderFunctionUrl
+    value: 'https://u4ek-qa-invitation-sender.azurewebsites.net/api/InvitationSender'
+    
+  - name: xsltProcessorUrl
+    value: 'https://u4ek-qa-functions-xslt.azurewebsites.net'
+
+  - name: orchestratorUrl
+    value: 'https://u4ek-qa-orchestrator-functions.azurewebsites.net'
+
+  - name: webhookUrl
+    value: 'https://u4ek-qa-trigger-http-webhook.azurewebsites.net'
+
+  - name: webhookV2Url
+    value: 'https://u4ek-qa-trigger-http-webhook-v2.azurewebsites.net'
+
+  - name: messageHubTriggerUrl
+    value: 'https://u4ek-qa-trigger-message-hub.azurewebsites.net'
+
+  - name: schedulerTriggerUrl
+    value: 'https://u4ek-qa-trigger-scheduler-eg.azurewebsites.net'
+  
+  - name: actionUrl
+    value: 'https://u4ek-qa-$(actionId)-function.azurewebsites.net'
+ 
+  - name: actionUrlPrefix
+    value: 'https://u4ek-qa'
+
+  - name: actionUrlSuffix
+    value: 'function.azurewebsites.net'
+
+  - name: apiManagementUrl
+    value: 'https://u4ek-qa-serverless-gateway.azure-api.net'
+
+  - name: apiManagementWithCertificateUrl
+    value: 'https://u4ek-qa-serverless-mtls-gateway.azure-api.net'
+
+  - name: appStudioEnabled
+    value: true
+    
+  - name: appStudioApiServiceUrl
+    value: 'https://u4nextqa-api.azurewebsites.net'
+
+  - name: appStudioRendererServiceUrl
+    value: 'https://u4nextqa-renderer.azurewebsites.net'
+
+  - name: appStudioBundle
+    value: 'https://u4nextqa-studio.azureedge.net/u4-appstudio.js'
+
+  - name: externalCertificateKeyVaultResourceGroupName
+    value: 'u4peopleplatformsecrets'
+
+  - name: externalCertificateKeyVaultName
+    value: 'u4ppsecrets'
+    
+  - name: externalCertificateName
+    value: 'u4ppcertbinary'
+
+  - name: certificateKeyVault
+    value: 'u4ek-qa'
+
+  - name: certificatePasswordName
+    value: 'u4ppcert'
+
+  - name: certificateSecretName
+    value: 'u4ppcertpwd'
+
+  - name: certificateName
+    value: 'u4ek-qa-certificate'
+
+  - name: actionAppServiceName
+    value: "u4ek-qa-$(actionId)-function"
+
+  - name: environmentName
+    value: "qa"
+
+  - name: serviceName
+    value: "u4ek-qa"
+
+  - name: customHostName
+    value: ""
+
+  - name: u4costId
+    value: ""
+
+  - name: logLevel
+    value: "Information"
+
+  - name: enableSwagger
+    value: "true"
+
+  - name: autotestAdminTenantShortName
+    value: "admin"
+
+  - name: autotestNonAdminTenantShortName
+    value: "u4rdqa"
+
+  - name: addDNSRecords
+    value: "no"

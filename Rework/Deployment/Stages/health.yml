@@ -1,0 +1,21 @@
+parameters:
+  EnvironmentName: ''
+  ServiceConnection: ''
+  Dependency: ''
+
+stages:
+  - stage: 'Health_${{ parameters.EnvironmentName }}'
+    displayName: '${{ parameters.EnvironmentName }} - Health'
+    ${{ if ne(parameters.Dependency, '')}}:
+      dependsOn: ${{ parameters.Dependency }} 
+    ${{ if ne(parameters.Dependency, '')}}:
+      condition: succeeded('${{ parameters.Dependency }}')
+
+    variables:
+      - template: ../Resources/Variables/vars.${{ parameters.EnvironmentName }}.yml
+
+    jobs:
+      - template: ../Jobs/run.autotests.yml
+        parameters:    
+          ServiceConnection: ${{ parameters.ServiceConnection }}
+          EnvironmentName: ${{ parameters.EnvironmentName }}

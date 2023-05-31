@@ -1,0 +1,50 @@
+parameters:
+- name: actions
+  type: object
+- name: serviceConnection
+  type: string
+- name: dependency
+  type: string
+
+jobs:
+- ${{ each action in parameters.actions }}:
+  - job: DeployAction_${{ action.name }}
+    displayName: 'Deploy Action ${{ action.name }}'
+    dependsOn: ${{ parameters.Dependency }}
+    condition: succeeded('${{ parameters.Dependency }}')
+
+    variables:
+      - template: DeploymentResources/Resources/Variables/vars.${{ action.id }}.yml@EKExtensions
+      - name: actionId
+        value: ${{ action.id }}
+
+    pool:
+      vmImage: windows-latest
+    
+    steps:
+      - task: DownloadPipelineArtifact@2
+        displayName: 'Download resources files'
+        inputs:
+          source: 'current'
+          artifact: '${{ action.id }}-resources'
+          path: '$(Pipeline.Workspace)/resources'
+
+      - task: DownloadPipelineArtifact@2
+        displayName: 'Download services files'
+        inputs:
+          source: 'current'
+          artifact: '${{ action.id }}-service'
+          path: '$(Pipeline.Workspace)/service'
+        
+      - checkout: EKExtensions
+        path: 'ExtensionKit.Extensions/${{ action.id }}'
+
+      - template: DeploymentResources/Jobs/deploy.action.yml@EKExtensions
+        parameters:
+          serviceConnection: ${{ parameters.ServiceConnection }}
+          actionName: ${{ action.name }}
+          actionId: ${{ action.id }}
+          deploymentFile: ${{ action.bicep }}
+          workingDirectory: "$(Pipeline.Workspace)/ExtensionKit.Extensions/${{ action.id }}"
+          isHibernable: ${{ action.isHibernable }}
+          isNoop: ${{ action.isNoop }}

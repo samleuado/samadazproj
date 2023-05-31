@@ -1,0 +1,54 @@
+parameters:
+  ServiceConnection: ''
+  Dependency: ''
+  ApiServiceName: ''
+  FunctionsServiceName: ''
+  WriterServiceName: ''
+  DataCleanerServiceName: ''
+  InstallContrast: false
+
+jobs:
+- job: DeployFlowHistory
+  displayName: 'Deploy Flow History'
+  ${{ if ne(parameters.Dependency, '')}}:
+    dependsOn: ${{ parameters.Dependency }} 
+  ${{ if ne(parameters.Dependency, '')}}:
+    condition: succeeded('${{ parameters.Dependency }}')  
+  
+  pool: 
+    vmImage: 'ubuntu-latest'
+    
+  variables:
+  - template: DeploymentResources/resources/variables/vars.flow-history.yml@EKFlowHistory
+    parameters:
+      CustomHostName: $(customHostName)
+
+  steps:
+    - task: DownloadPipelineArtifact@2
+      displayName: 'Download resources files'
+      inputs:
+        source: 'current'
+        artifact: 'flow-history-resources'
+        path: '$(Pipeline.Workspace)/resources'
+
+    - task: DownloadPipelineArtifact@2
+      displayName: 'Download services files'
+      inputs:
+        source: 'current'
+        artifact: 'flow-history-service'
+        path: '$(Pipeline.Workspace)/service'
+
+    - checkout: EKFlowHistory
+      path: 'ExtensionsKit.FlowHistory'
+
+    - template: DeploymentResources/jobs/deploy.components.yml@EKFlowHistory
+      parameters: 
+        ServiceConnection: ${{ parameters.ServiceConnection }}
+        ResourceGroupName: $(resourceGroupName)
+        ResourceGroupLocation: $(location)
+        ApiServiceName: ${{ parameters.ApiServiceName }}
+        FunctionsServiceName: ${{ parameters.FunctionsServiceName }}
+        WriterServiceName: ${{ parameters.WriterServiceName }}
+        DataCleanerServiceName: ${{ parameters.DataCleanerServiceName }}
+        WorkingDirectory: "$(Pipeline.Workspace)/ExtensionsKit.FlowHistory"
+        InstallContrast: '${{ parameters.InstallContrast }}'

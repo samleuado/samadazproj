@@ -1,0 +1,28 @@
+trigger:
+  - deploy-rework
+
+pr:
+  autoCancel: true
+
+pool:
+  vmImage: 'windows-latest'
+
+variables:
+  - group: 'Unit4 - Service Connections'
+  - group: 'WhiteSource'
+
+stages:
+    - template: Stages/environment.common.yml
+      parameters:
+        ServiceConnection: $(PeoplePlatformDevelopment)
+        DiscoServiceConnection: $(PeoplePlatformDevelopment)
+        ServiceName: 'u4ek-dev'
+        EnvironmentName: 'dev'
+
+    - template: Stages/environment.common.yml
+      parameters:
+        ServiceConnection: $(PeoplePlatformDevelopment)
+        DiscoServiceConnection: $(PeoplePlatformDevelopment)
+        ServiceName: 'u4ek-qa'
+        EnvironmentName: 'qa'
+        Dependency: 'Infrastructure_dev'

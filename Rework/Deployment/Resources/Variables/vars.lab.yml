@@ -1,0 +1,363 @@
+variables:
+  - name: location
+    value: "North Europe"
+
+  - name: locationShortcut
+    value: "eun"
+
+  - name: isPrimaryEnvironment
+    value: true
+
+  - name: servicePrincipalID
+    value: "5f8780d5-6b8c-4209-8e8e-7528a7596329"
+
+  - name: resourceGroupName
+    value: "t-eun-ek1"
+
+  - name: serviceDomain
+    value: "unit4cloud-lab.com"
+
+  - name: customDomain
+    value: "unit4cloud-lab.com"
+
+  - name: customServiceName
+    value: "t-eu-ek1"
+
+  - name: customDomainVerificationID
+    value: "F9AF920E1802BF279D604CB93E749C820F5B627313943B09AC161C6FB9FAEFBF"
+
+  - name: serviceNameGEO
+    value: ""
+
+  - name: noScaleServicePlan
+    value: "t-eun-ek1-no-scale"
+
+  - name: noScaleServicePlanTier
+    value: "P1v2"
+
+  - name: userQueriesServicePlan
+    value: "t-eun-ek1-user-queries"
+
+  - name: userQueriesServicePlanTier
+    value: "P1v2"
+
+  - name: userQueriesServicePlanMaxInstances
+    value: "2"
+
+  - name: flowRuntimeServicePlan
+    value: "t-eun-ek1-flow-runtime"
+
+  - name: flowRuntimeServicePlanTier
+    value: "P1v2"
+
+  - name: flowRuntimeServicePlanMaxInstances
+    value: "2"
+
+  - name: consumptionServicePlan
+    value: "t-eun-ek1-consumption"
+
+  - name: enableDiagnostic
+    value: false
+
+  - name: applicationInsightsName
+    value: "EUN-SAAS-U4EK-S-001-CLAB"
+
+  - name: appInsightsLocation
+    value: "North Europe"
+
+  - name: workspaceResourceGroup
+    value: "lab-oms"
+
+  - name: workspaceName
+    value: "lab-la"
+
+  - name: keyVaultName
+    value: "t-eun-ek1"
+
+  - name: sharedKeyVaultName
+    value: "t-global-microservices"
+
+  - name: cosmosDbResourceGroup
+    value: "t-eun-ek1"
+
+  - name: cosmosDbName
+    value: "t-eun-ek1"
+
+  - name: cosmosDbSecondaryRegion
+    value: ""
+
+  - name: storageAccountResourceGroup
+    value: "t-eun-ek1"
+
+  - name: storageAccountName
+    value: "teunek1"
+
+  - name: storageAccountSkuReplication
+    value: "Standard_LRS"
+
+  - name: eventGridTopicResourceGroup
+    value: "t-eun-ek1"
+
+  - name: eventGridTopicName
+    value: "t-eun-ek1"
+
+  - name: redisResourceGroup
+    value: "t-eun-ek1"
+
+  - name: redisName
+    value: "t-eun-ek1"
+
+  - name: redisCacheSku
+    value: "Basic"
+
+  - name: redisCacheCapacity
+    value: 0
+
+  - name: apiManagementName
+    value: "t-eun-ek1-serverless-gateway"
+
+  - name: apiManagementWithCertificateName
+    value: 't-eun-ek1-serverless-mtls-gateway'
+
+  - name: enableMTLS
+    value: true
+
+  - name: ekSourceSystem
+    value: "u4ek"
+
+  - name: ekAdminTenant
+    value: "u4ids-admin-tenant"
+
+  - name: ekAdminTenantName
+    value: "Extension Kit Admin Tenant"
+
+  - name: ekAdminTenantShortName
+    value: "admin"
+
+  - name: ekAdminUserId
+    value: "Oleg Ryabtsev"
+
+  - name: ekAdminUserEmail
+    value: "Oleg.Ryabtsev@unit4.com"
+
+  - name: ekAdminUserDisplayName
+    value: "Oleg Ryabtsev"
+
+  - name: ekAdminTenantLogoUrl
+    value: "https://www.unit4.com/sites/default/files/images/logo.svg"
+
+  - name: emailSender
+    value: "no-reply-extensionkit@unit4cloud-lab.com"
+
+  - name: emailDescription
+    value: "no-reply Extension Kit"
+
+  - name: emailKeySecretName
+    value: "u4-provisioning-master-key"
+
+  - name: azureFunctionKeySecretName
+    value: "t-eun-ek1-azure-function-secret"
+
+  - name: eventGridInternalKeySecretName
+    value: "t-eun-ek1-internal-eventgrid-secret"
+
+  - name: idsKeyVaultName
+    value: "t-eun-ids1"
+
+  - name: idsAdminUserName
+    value: "u4ids-admin-clientid"
+
+  - name: idsAdminSecretName
+    value: "u4ids-admin-client-secret"
+
+  - name: idsBaseUrl
+    value: "https://t-eu-ids1.unit4cloud-lab.com"
+
+  - name: idsUrl
+    value: "https://t-eu-ids1.unit4cloud-lab.com/identity"
+
+  - name: ekInternalClientId
+    value: "t-eun-ek1-internal"
+
+  - name: ekPortalClientId
+    value: "t-eun-ek1-portal-pkce"
+
+  - name: ekProvisionerClientId
+    value: "t-eun-ek1-provisioner"
+
+  - name: ekDiscoClientId
+    value: "u4ds-devop-client"
+
+  - name: mhInstanceName
+    value: "t-eu-mh1"
+
+  - name: mhInstanceDomain
+    value: "unit4cloud-lab.com"
+
+  - name: mhAccessProviderUrl
+    value: "https://t-eu-mh1-accessprovider.unit4cloud-lab.com"
+
+  - name: mhManagerUrl
+    value: "https://t-eu-mh1-manager.unit4cloud-lab.com"
+
+  - name: discoEnvironment
+    value: "lab"
+            
+  - name: discoveryStageName
+    value: 'lab'
+
+  - name: discoveryServiceUrl
+    value: "https://t-disco1.unit4cloud-lab.com"
+
+  - name: discoveryServiceIdsUrl
+    value: "https://t-eu-ids1.unit4cloud-lab.com"
+
+  - name: amApiUrl
+    value: "https://t-eu-am1.unit4cloud-lab.com"
+
+  - name: daPushApiUrl
+    value: "https://t-eun-dapush1-service.azurewebsites.net"
+
+  - name: instantUIApiUrl
+    value: "https://nextgen-renderer-does-not-exist-yet.unit4cloud-lab.com"
+
+  - name: portalUrl
+    value: "https://t-eu-ek1-portal.unit4cloud-lab.com"
+
+  - name: extensionsApiUrl
+    value: "https://t-eu-ek1-extensions.unit4cloud-lab.com"
+
+  - name: tafUrl
+    value: "https://t-eu-ek1-taf.unit4cloud-lab.com"
+
+  - name: ekApiUrl
+    value: "https://t-eu-ek1-api.unit4cloud-lab.com"
+
+  - name: hibernationApiUrl
+    value: "https://t-eu-ek1-hibernation.unit4cloud-lab.com"
+
+  - name: tenantsApiUrl
+    value: "https://t-eu-ek1-tenants.unit4cloud-lab.com"
+
+  - name: tenantConsumptionUpdaterUrl
+    value: https://t-eu-ek1-tenant-consumption-updater.unit4cloud-lab.com
+
+  - name: flowsApiUrl
+    value: "https://t-eu-ek1-flows.unit4cloud-lab.com"
+
+  - name: flowNotificationUrl
+    value: https://t-eu-ek1-flow-notification-function.unit4cloud-lab.com
+
+  - name: flowHistoryApiUrl
+    value: "https://t-eu-ek1-flowhistory.unit4cloud-lab.com"
+
+  - name: ekInvitationSenderFunctionUrl
+    value: "https://t-eu-ek1-invitation-sender.unit4cloud-lab.com/api/InvitationSender"
+
+  - name: xsltProcessorUrl
+    value: "https://t-eu-ek1-functions-xslt.unit4cloud-lab.com"
+
+  - name: orchestratorUrl
+    value: https://t-eu-ek1-orchestrator-functions.unit4cloud-lab.com
+
+  - name: webhookUrl
+    value: "https://t-eu-ek1-trigger-http-webhook.unit4cloud-lab.com"
+
+  - name: webhookV2Url
+    value: "https://t-eu-ek1-trigger-http-webhook-v2.unit4cloud-lab.com"
+
+  - name: messageHubTriggerUrl
+    value: https://t-eu-ek1-trigger-message-hub.unit4cloud-lab.com
+
+  - name: schedulerTriggerUrl
+    value: https://t-eu-ek1-trigger-scheduler-eg.unit4cloud-lab.com
+
+  - name: actionUrl
+    value: https://t-eu-ek1-$(actionId)-function.unit4cloud-lab.com
+
+  - name: actionUrlPrefix
+    value: 'https://t-eu-ek1'
+
+  - name: actionUrlSuffix
+    value: 'function.unit4cloud-lab.com'
+
+  - name: apiManagementUrl
+    value: "https://t-eun-ek1-serverless-gateway.azure-api.net"
+
+  - name: appStudioEnabled
+    value: true
+
+  - name: appStudioApiServiceUrl
+    value: "https://t-eun-ngu1-api.unit4cloud-lab.com"
+
+  - name: appStudioRendererServiceUrl
+    value: "https://t-eun-ngu1-renderer.unit4cloud-lab.com"
+
+  - name: appStudioBundle
+    value: "https://t-eun-ngu1-studio.azureedge.net/u4-appstudio.js"
+
+  - name: externalCertificateKeyVaultResourceGroupName
+    value: 'T-EUN-KEYVAULTS'
+
+  - name: externalCertificateKeyVaultName
+    value: 't-eun-keyvault-ssl'
+    
+  - name: externalCertificateName
+    value: 'star-unit4cloud-lab-com'
+
+  - name: certificatePasswordName
+    value: "t-eun-ek1-certpwd"
+
+  - name: certificateSecretName
+    value: "t-eun-ek1-cert"
+
+  - name: certificateName
+    value: "t-eun-ek1-certificate"
+
+  - name: actionAppServiceName
+    value: "t-eun-ek1-$(actionId)-function"
+
+  - name: discoveryStageName
+    value: "lab"
+
+  - name: serviceNameSuffix
+    value: "api,flowHistory,portal,for-each-function,xml-parse-function,stop-function,event-grid-publish-function,flow-notification-function,hibernation,json-parse-function,da-push-text-function,da-push-travel-request-function,da-question-function,http-request-function,trigger-http-webhook-v2,email-function,trigger-scheduler-eg,trigger-message-hub,orchestrator-functions,flowhistory-writer-function,invitation-sender,tenant-consumption-updater,extensions,tenants,flows,flowhistory-data-cleaner-function,sftp-list-function,sftp-get-content-function,sftp-delete-function,sftp-create-function,xslt-transformation-function,json-to-xml-function,pause-function,pgp-encrypt-function,pgp-decrypt-function,sign-xml-function,verify-xml-function,functions-xslt,xslt3-transformation-function,taf,mh-genactor-function,mh-event-action-function,u4id-resolver-function,xml-encrypt-function,xml-decrypt-function"
+
+  - name: serviceName
+    value: "t-eun-ek1"
+
+  - name: customHostName
+    value: "t-eu-ek1"
+
+  - name: u4costId
+    value: "EUN_CLAB_U4EK_S_ALL_NPES_COMM"
+
+  - name: logLevel
+    value: "Information"
+
+  - name: enableSwagger
+    value: "true"
+
+  - name: autotestAdminTenantShortName
+    value: "admin"
+
+  - name: autotestNonAdminTenantShortName
+    value: ""
+
+  - name: primaryBIGIPURL
+    value: "leunadc10-ext-pip28.northeurope.cloudapp.azure.com"
+
+  - name: secondaryBIGIPURL
+    value: ""
+
+  - name: dnsZoneResourceGroupName
+    value: "L-GLOBAL-DNS"
+
+  - name: dnsTTL
+    value: 60
+
+  - name: addDNSRecords
+    value: "yes"
+
+  - name: addIPAllowListing
+    value: "yes"

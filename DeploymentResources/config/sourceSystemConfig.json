@@ -1,0 +1,65 @@
+{
+    "$schema": "./sourceSystemConfig.schema.json",
+    "version": "1.0.0",
+    "dictionary": {
+        "stage": "",
+        "region": "",
+        "version": "",
+        "apiUrl": "",
+        "tafUrl": ""
+    },
+    "disco": {
+        "sourceSystemTypes": [
+            {
+                "code": "u4ek",
+                "name": "Unit4 Extension Kit",
+                "description": "The Unit4 Extension Kit (U4EK) is a toolkit for authoring and deploying new capabilities as micro-services, a cloud hosting model, and a declarative way to connect new and existing capabilities together to create new functionality.",
+                "deploymentType": "Regional",
+                "validServiceTypes": [
+                    "webapi"
+                ],
+                "documentationUri": "https://thehub.unit4.com/docs/extensions-kit/Latest/docs:index.md",
+                "pipelineUri": "https://dev.azure.com/unit4-peopleplatform/People%20Platform/_release?_a=releases&view=all&definitionId=722"
+            }
+        ],
+        "sourceSystems": [
+            {
+                "name": "u4ek-$$stage$$-$$region$$",
+                "type": "u4ek",
+                "stage": "$$stage$$",
+                "version": "$$version$$",
+                "region": "$$region$$",
+                "dependencies": [
+                    "u4ids",
+                    "u4amg",
+                    "u4mhu"
+                ],
+                "activationFunction": {
+                    "type": "Http",
+                    "configuration": "{\"Uri\":\"$$tafUrl$$/api/TenantActivationFunction\"}"
+                },
+                "activationParameters": [
+                    {
+                        "dataType": "string",
+                        "name": "ShortName",
+                        "label": "Tenant short name"
+                    },
+                    {
+                        "dataType": "string",
+                        "name": "LogoUrl",
+                        "label": "Tenant logo Url"
+                    }
+                ],
+                "services": [
+                    {
+                        "name": "Unit4 Extension Kit Public API",
+                        "type": "webapi",
+                        "url": "$$apiUrl$$",
+                        "healthCheck": "$$apiUrl$$/api/health",
+                        "version": "$$version$$"
+                    }
+                ]
+            }
+        ]
+    }
+}

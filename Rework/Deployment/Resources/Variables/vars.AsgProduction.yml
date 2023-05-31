@@ -1,0 +1,363 @@
+variables:
+  - name: location
+    value: "Southeast Asia"
+
+  - name: locationShortcut
+    value: "asg"
+
+  - name: isPrimaryEnvironment
+    value: true
+
+  - name: servicePrincipalID
+    value: "7750b096-de29-41f7-863e-cbd4ad4ef8f7"
+
+  - name: resourceGroupName
+    value: "s-asg-ek1"
+
+  - name: serviceDomain
+    value: "unit4cloud.com"
+
+  - name: customDomain
+    value: "unit4cloud.com"
+
+  - name: customServiceName
+    value: "s-as-ek1"
+
+  - name: customDomainVerificationID
+    value: "3D8E5894FAC6441F73DEC9D97917C1BDEFBFA90B1D02BD77EEE247F288462A2A"
+
+  - name: serviceNameGEO
+    value: ""
+
+  - name: noScaleServicePlan
+    value: "s-asg-ek1-no-scale"
+
+  - name: noScaleServicePlanTier
+    value: "P1v2"
+
+  - name: userQueriesServicePlan
+    value: "s-asg-ek1-user-queries"
+
+  - name: userQueriesServicePlanTier
+    value: "P1v2"
+
+  - name: userQueriesServicePlanMaxInstances
+    value: "2"
+
+  - name: flowRuntimeServicePlan
+    value: "s-asg-ek1-flow-runtime"
+
+  - name: flowRuntimeServicePlanTier
+    value: "P1v2"
+
+  - name: flowRuntimeServicePlanMaxInstances
+    value: "2"
+
+  - name: consumptionServicePlan
+    value: "s-asg-ek1-consumption"
+
+  - name: enableDiagnostic
+    value: false
+
+  - name: applicationInsightsName
+    value: "ASG-SAAS-U4EK-S-001-PROD"
+
+  - name: appInsightsLocation
+    value: "Southeast Asia"
+
+  - name: workspaceResourceGroup
+    value: "global-oms"
+
+  - name: workspaceName
+    value: "u4saas"
+
+  - name: keyVaultName
+    value: "s-asg-ek1"
+
+  - name: sharedKeyVaultName
+    value: "s-global-microservices"
+
+  - name: cosmosDbResourceGroup
+    value: "s-asg-ek1"
+
+  - name: cosmosDbName
+    value: "s-asg-ek1"
+
+  - name: cosmosDbSecondaryRegion
+    value: "East Asia"
+
+  - name: storageAccountResourceGroup
+    value: "s-asg-ek1"
+
+  - name: storageAccountName
+    value: "sasgek1"
+
+  - name: storageAccountSkuReplication
+    value: "Standard_GRS"
+
+  - name: eventGridTopicResourceGroup
+    value: "s-asg-ek1"
+
+  - name: eventGridTopicName
+    value: "s-asg-ek1"
+
+  - name: redisResourceGroup
+    value: "s-asg-ek1"
+
+  - name: redisName
+    value: "s-asg-ek1"
+
+  - name: redisCacheSku
+    value: "Basic"
+
+  - name: redisCacheCapacity
+    value: 0
+
+  - name: apiManagementName
+    value: "s-asg-ek1-serverless-gateway"
+
+  - name: apiManagementWithCertificateName
+    value: 's-asg-ek1-serverless-mtls-gateway'
+
+  - name: enableMTLS
+    value: false
+
+  - name: ekSourceSystem
+    value: "u4ek"
+
+  - name: ekAdminTenant
+    value: "u4ids-admin-tenant"
+
+  - name: ekAdminTenantName
+    value: "Extension Kit Admin Tenant"
+
+  - name: ekAdminTenantShortName
+    value: "admin"
+
+  - name: ekAdminUserId
+    value: "Oleg Ryabtsev"
+
+  - name: ekAdminUserEmail
+    value: "Oleg.Ryabtsev@unit4.com"
+
+  - name: ekAdminUserDisplayName
+    value: "Oleg Ryabtsev"
+
+  - name: ekAdminTenantLogoUrl
+    value: "https://www.unit4.com/sites/default/files/images/logo.svg"
+
+  - name: emailSender
+    value: "no-reply-extensionkit@unit4cloud.com"
+
+  - name: emailDescription
+    value: "no-reply Extension Kit"
+
+  - name: emailKeySecretName
+    value: "u4-provisioning-master-key"
+
+  - name: azureFunctionKeySecretName
+    value: "s-asg-ek1-azure-function-secret"
+
+  - name: eventGridInternalKeySecretName
+    value: "s-asg-ek1-internal-eventgrid-secret"
+
+  - name: idsKeyVaultName
+    value: "s-asg-ids1"
+
+  - name: idsAdminUserName
+    value: "u4ids-admin-clientid"
+
+  - name: idsAdminSecretName
+    value: "u4ids-admin-client-secret"
+
+  - name: idsBaseUrl
+    value: "https://s-as-ids1.unit4cloud.com"
+
+  - name: idsUrl
+    value: "https://s-as-ids1.unit4cloud.com/identity"
+
+  - name: ekInternalClientId
+    value: "s-asg-ek1-internal"
+
+  - name: ekPortalClientId
+    value: "s-asg-ek1-portal-pkce"
+
+  - name: ekProvisionerClientId
+    value: "s-asg-ek1-provisioner"
+
+  - name: ekDiscoClientId
+    value: "u4ds-devop-client"
+
+  - name: mhInstanceName
+    value: "s-as-mh1-preview"
+
+  - name: mhInstanceDomain
+    value: "unit4cloud.com"
+
+  - name: mhAccessProviderUrl
+    value: "https://s-as-mh1-accessprovider.unit4cloud.com"
+
+  - name: mhManagerUrl
+    value: "https://s-as-mh1-manager.unit4cloud.com"
+
+  - name: discoEnvironment
+    value: "production"
+
+  - name: discoveryServiceUrl
+    value: "https://s-disco1.unit4cloud.com"
+
+  - name: discoveryServiceIdsUrl
+    value: "https://s-eu-ids1.unit4cloud.com"
+
+  - name: amApiUrl
+    value: "https://s-as-am1.unit4cloud.com"
+
+  - name: daPushApiUrl
+    value: "https://s-asg-dapush1-service.azurewebsites.net"
+
+  - name: instantUIApiUrl
+    value: "https://nextgen-renderer-does-not-exist-yet.unit4cloud.com"
+
+  - name: portalUrl
+    value: "https://s-as-ek1-portal.unit4cloud.com"
+
+  - name: extensionsApiUrl
+    value: "https://s-as-ek1-extensions.unit4cloud.com"
+
+  - name: tafUrl
+    value: "https://s-as-ek1-taf.unit4cloud.com"
+
+  - name: ekApiUrl
+    value: "https://s-as-ek1-api.unit4cloud.com"
+
+  - name: hibernationApiUrl
+    value: "https://s-as-ek1-hibernation.unit4cloud.com"
+
+  - name: tenantsApiUrl
+    value: "https://s-as-ek1-tenants.unit4cloud.com"
+
+  - name: tenantConsumptionUpdaterUrl
+    value: https://s-as-ek1-tenant-consumption-updater.unit4cloud.com
+
+  - name: flowsApiUrl
+    value: "https://s-as-ek1-flows.unit4cloud.com"
+
+  - name: flowNotificationUrl
+    value: https://s-as-ek1-flow-notification-function.unit4cloud.com
+
+  - name: flowHistoryApiUrl
+    value: "https://s-as-ek1-flowhistory.unit4cloud.com"
+
+  - name: ekInvitationSenderFunctionUrl
+    value: "https://s-as-ek1-invitation-sender.unit4cloud.com/api/InvitationSender"
+
+  - name: xsltProcessorUrl
+    value: "https://s-as-ek1-functions-xslt.unit4cloud.com"
+
+  - name: orchestratorUrl
+    value: https://s-as-ek1-orchestrator-functions.unit4cloud.com
+
+  - name: webhookUrl
+    value: "https://s-as-ek1-trigger-http-webhook.unit4cloud.com"
+
+  - name: webhookV2Url
+    value: "https://s-as-ek1-trigger-http-webhook-v2.unit4cloud.com"
+
+  - name: messageHubTriggerUrl
+    value: https://s-as-ek1-trigger-message-hub.unit4cloud.com
+
+  - name: schedulerTriggerUrl
+    value: https://s-as-ek1-trigger-scheduler-eg.unit4cloud.com
+
+  - name: actionUrl
+    value: https://s-as-ek1-$(actionId)-function.unit4cloud.com
+
+  - name: actionUrlPrefix
+    value: 'https://s-as-ek1'
+
+  - name: actionUrlSuffix
+    value: 'function.unit4cloud.com'
+
+  - name: apiManagementUrl
+    value: "https://s-asg-ek1-serverless-gateway.azure-api.net"
+
+  - name: appStudioEnabled
+    value: false
+
+  - name: appStudioApiServiceUrl
+    value: ""
+
+  - name: appStudioRendererServiceUrl
+    value: ""
+
+  - name: appStudioBundle
+    value: ""
+
+  - name: externalCertificateKeyVaultResourceGroupName
+    value: "S-EUN-KEYVAULT"
+
+  - name: externalCertificateKeyVaultName
+    value: "s-eun-keyvault-ssl"
+    
+  - name: externalCertificateName
+    value: "star-unit4cloud-com"
+
+  - name: certificateKeyVault
+    value: "s-asg-ek1"
+
+  - name: certificatePasswordName
+    value: "s-asg-ek1-certpwd"
+
+  - name: certificateSecretName
+    value: "s-asg-ek1-cert"
+
+  - name: certificateName
+    value: "s-asg-ek1-certificate"
+
+  - name: actionAppServiceName
+    value: "s-asg-ek1-$(actionId)-function"
+
+  - name: discoveryStageName
+    value: "prod"
+
+  - name: serviceNameSuffix
+    value: "api,flowHistory,portal,for-each-function,xml-parse-function,stop-function,event-grid-publish-function,flow-notification-function,hibernation,json-parse-function,da-push-text-function,da-question-function,http-request-function,trigger-http-webhook-v2,email-function,trigger-scheduler-eg,trigger-message-hub,orchestrator-functions,flowhistory-writer-function,invitation-sender,tenant-consumption-updater,extensions,tenants,flows,flowhistory-data-cleaner-function,sftp-list-function,sftp-get-content-function,sftp-delete-function,sftp-create-function,xslt-transformation-function,json-to-xml-function,pause-function,pgp-encrypt-function,pgp-decrypt-function,sign-xml-function,verify-xml-function,functions-xslt,xslt3-transformation-function,taf,mh-genactor-function,mh-event-action-function,u4id-resolver-function,xml-encrypt-function,xml-decrypt-function"
+
+  - name: serviceName
+    value: "s-asg-ek1"
+
+  - name: customHostName
+    value: "s-as-ek1"
+
+  - name: u4costId
+    value: "ASG_NGSS_U4EK_S_ALL_PROD_PROD"
+
+  - name: logLevel
+    value: "Information"
+
+  - name: enableSwagger
+    value: "false"
+
+  - name: autotestAdminTenantShortName
+    value: "admin"
+
+  - name: autotestNonAdminTenantShortName
+    value: ""
+
+  - name: primaryBIGIPURL
+    value: "sasgadc10-ext-pip28.southeastasia.cloudapp.azure.com"
+
+  - name: secondaryBIGIPURL
+    value: "sausadc10-ext-pip28.australiasoutheast.cloudapp.azure.com"
+
+  - name: dnsZoneResourceGroupName
+    value: "global-dns"
+
+  - name: dnsTTL
+    value: 60
+
+  - name: addDNSRecords
+    value: "yes"
+
+  - name: addIPAllowListing
+    value: "yes"

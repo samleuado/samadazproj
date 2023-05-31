@@ -1,0 +1,65 @@
+
+parameters:
+  ComponentName: ''
+  ComponentId: ''
+  PipelineId: 0
+  RunId: -1
+
+jobs:
+- job: GetArtifact_${{ parameters.ComponentName }}
+  displayName: 'GetArtifact - ${{ parameters.ComponentName }}'
+
+  steps:
+    - task: DownloadPipelineArtifact@2
+      condition: eq('${{ parameters.RunId }}', -1)
+      displayName: 'Download last resources files'
+      inputs:
+        source: 'specific'
+        project: '901a45d7-f45c-486f-8bc2-ca12fcf433cd'
+        pipeline: ${{ parameters.PipelineId }}
+        tags: candidate
+        allowPartiallySucceededBuilds: true
+        artifact: 'resources'
+        path: '$(Pipeline.Workspace)/resources'
+  
+    - task: DownloadPipelineArtifact@2
+      condition: eq('${{ parameters.RunId }}', -1)
+      displayName: 'Download last services files'
+      inputs:
+        source: 'specific'
+        project: '901a45d7-f45c-486f-8bc2-ca12fcf433cd'
+        pipeline: ${{ parameters.PipelineId }}
+        tags: candidate
+        allowPartiallySucceededBuilds: true
+        artifact: 'service'
+        path: '$(Pipeline.Workspace)/service'
+        
+    - task: DownloadPipelineArtifact@2
+      condition: ne('${{ parameters.RunId }}', -1)
+      displayName: 'Download specific resources files'
+      inputs:
+        source: 'specific'
+        project: '901a45d7-f45c-486f-8bc2-ca12fcf433cd'
+        pipeline: ${{ parameters.PipelineId }}
+        runId: ${{ parameters.RunId }}
+        allowPartiallySucceededBuilds: true
+        artifact: 'resources'
+        path: '$(Pipeline.Workspace)/resources'
+
+    - task: DownloadPipelineArtifact@2
+      condition: ne('${{ parameters.RunId }}', -1)
+      displayName: 'Download specific services files'
+      inputs:
+        source: 'specific'
+        project: '901a45d7-f45c-486f-8bc2-ca12fcf433cd'
+        pipeline: ${{ parameters.PipelineId }}
+        runId: ${{ parameters.RunId }}
+        allowPartiallySucceededBuilds: true
+        artifact: 'service'
+        path: '$(Pipeline.Workspace)/service'
+
+    - publish: '$(Pipeline.Workspace)/resources'      
+      artifact: '${{ parameters.ComponentId }}-resources'
+
+    - publish: '$(Pipeline.Workspace)/service'
+      artifact: '${{ parameters.ComponentId }}-service'

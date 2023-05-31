@@ -1,0 +1,37 @@
+parameters:
+  ServiceConnection: ''
+  DiscoServiceConnection: ''
+  EnvironmentName: ''
+  ServiceName: ''
+  Dependency: ''
+
+stages:
+  - stage: Infrastructure_${{ parameters.EnvironmentName }}
+    displayName: '${{ parameters.EnvironmentName }} - Infrastructure'
+    ${{ if ne(parameters.Dependency, '')}}:
+      dependsOn:
+      - GetArtifacts
+      - ${{ parameters.Dependency }}
+      condition: and(not(canceled()), not(failed()))
+    pool:
+      vmImage: 'windows-latest'
+
+    variables:
+      - template: ../Resources/Variables/vars.${{ parameters.EnvironmentName }}.yml
+      - name: serviceBundleVersion
+        value: $[ stageDependencies.GetArtifacts.SetVersion.outputs['SetVersion.serviceBundleVersion'] ]
+
+    jobs:
+      - template: ../Jobs/deploy.common.yml@self
+        parameters:
+          ServiceName: ${{ parameters.ServiceName }}
+          EnvironmentName: ${{ parameters.EnvironmentName }}
+          ServiceConnection: ${{ parameters.ServiceConnection }}
+
+      - template: ../Jobs/provision.common.yml@self
+        parameters:
+          ServiceName: ${{ parameters.ServiceName }}
+          ServiceConnection: ${{ parameters.ServiceConnection }}
+          DiscoServiceConnection: ${{ parameters.DiscoServiceConnection }}
+          CustomServiceName: $(customHostName)
+          Dependency: 'DeployInfra'

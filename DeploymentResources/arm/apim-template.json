@@ -1,0 +1,133 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "serviceName": {
+            "type": "string"
+        },
+        "sharedArtifactsVersion": {
+            "type": "string",
+            "metadata": {
+                "description": "Version (build id) that identifies the shared deployment artifacts version to use"
+            }
+        },
+        "artifactsContainerUri": {
+            "type": "string",
+            "metadata": {
+                "description": "Uri for the Blob containing the deployment artifacts"
+            }
+        },
+        "artifactsContainerSasToken": {
+            "type": "string",
+            "metadata": {
+                "description": "SAS Token to access the Blob storage containing the deployment artifacts"
+            }
+        },
+        "idsUri": {
+            "type": "string"
+        },
+        "ekOwnerEmail": {
+            "type": "string"
+        },
+        "ekOwnerName": {
+            "type": "string"
+        },
+
+        "keyVaultSubscription": {
+            "type": "string"
+        },
+        "keyVaultResourceGroup": {
+            "type": "string"
+        },
+        "keyVaultName": {
+            "type": "string"
+        },
+        "customDomain": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "customServiceName": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "deploymentModel": {
+            "type": "string",
+            "defaultValue": "PP",
+            "allowedValues": [
+                "SaaS",
+                "PP"
+            ]
+        },
+        "u4costId": {
+            "type": "string",
+            "defaultValue": ""
+        }
+    },
+
+    "variables": {
+        "linkedApiManagementTemplateUri": "[concat(parameters('artifactsContainerUri'), 'shared/', parameters('sharedArtifactsVersion'),'/', 'apiManagement.json', parameters('artifactsContainerSasToken'))]",
+
+        "internalClientId": "[concat(parameters('serviceName'), '-internal')]",
+        
+        "urlDomain": "[if(equals(parameters('deploymentModel'), 'PP'), if(empty(parameters('customDomain')), 'azurewebsites.net', parameters('customDomain')), 'azurewebsites.net')]",
+        "customServiceNameUrl": "[if(equals(parameters('deploymentModel'), 'PP'), if(empty(parameters('customServiceName')), parameters('serviceName'), parameters('customServiceName')), parameters('serviceName'))]",
+        
+        "ekApiUri": "[concat('https://', variables('customServiceNameUrl'), '-api.', variables('urlDomain'))]",
+        "apiManagementName": "[concat(variables('customServiceNameUrl'), '-gateway')]",
+        "webhookUri": "[concat('https://', variables('customServiceNameUrl'), '-trigger-http-webhook.', variables('urlDomain'))]",
+        "idsAuthority": "[concat(parameters('idsUri'), '/identity')]"
+    },
+
+    "resources": [
+        {
+            "apiVersion": "2018-05-01",
+            "name": "APIManagement",
+            "type": "Microsoft.Resources/deployments",
+            "dependsOn": [],
+            "tags": {
+                "U4COSTID": "[parameters('u4costId')]"
+            },
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('linkedApiManagementTemplateUri')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "debugSetting": {
+                    "detailLevel": "requestContent,responseContent"
+                },
+                "parameters": {
+                    "apiManagementName": {
+                        "value": "[variables('apiManagementName')]"
+                    },
+                    "apiManagementNamedValueExtensionsKitUri": {
+                        "value": "[variables('ekApiUri')]"
+                    },
+                    "apiManagementNamedValueExtensionsKitWebhookUri": {
+                        "value": "[variables('webhookUri')]"
+                    },
+                    "idsUri": {
+                        "value": "[variables('idsAuthority')]"
+                    },
+                    "ekInternalClientId": {
+                        "value": "[variables('internalClientId')]"
+                    },
+                    "ekInternalClientSecret": {
+                        "reference": {
+                            "keyVault": {
+                                "id": "[concat('/subscriptions/', parameters('keyVaultSubscription'), '/resourceGroups/',parameters('keyVaultResourceGroup'),'/providers/Microsoft.KeyVault/vaults/', parameters('keyVaultName'))]"
+                            },
+                            "secretName": "[concat(variables('internalClientId'), '-secret')]"
+                        }
+                    },
+                    "ekOwnerEmail": {
+                        "value": "[parameters('ekOwnerEmail')]"
+                    },
+                    "ekOwnerName": {
+                        "value": "[parameters('ekOwnerName')]"
+                    }
+                }
+            }
+        }
+    ]
+}

@@ -1,0 +1,2029 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "apiManagementName": {
+      "type": "string",
+      "metadata": {
+        "description": "API Management resource name"
+      }
+    },
+    "ekInternalClientId": {
+      "type": "string"
+    },
+    "ekInternalClientSecret": {
+      "type": "securestring"
+    },
+    "ekOwnerEmail": {
+      "type": "string",
+      "metadata": {
+        "description": "Email address of the Extensions Kit owner"
+      }
+    },
+    "ekOwnerName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the Extensions Kit owner"
+      }
+    },
+    "idsUri": {
+      "type": "string"
+    },
+    "apiManagementNamedValueExtensionsKitUri": {
+      "type": "string",
+      "metadata": {
+        "description": "Extensions Kit API Uri"
+      }
+    },
+    "apiManagementNamedValueExtensionsKitWebhookUri": {
+      "type": "string",
+      "metadata": {
+        "description": "Extensions Kit Webhook Uri"
+      }
+    },
+    "apiManagementNamedValueExtensionsKitWebhookV2Uri": {
+      "type": "string",
+      "metadata": {
+        "description": "Extensions Kit Webhook V2 Uri"
+      }
+    },
+    "apiManagementSkuName": {
+      "type": "string",
+      "defaultValue": "Consumption",
+      "metadata": {
+        "description": "API Management available pricing tiers are: Consumption, Developer, Basic, Standard, Premium, Isolated"
+      }
+    },
+    "apiManagementSkuCapacity": {
+      "type": "int",
+      "defaultValue": 0,
+      "metadata": {
+        "description": "API Management instance count"
+      }
+    },
+    "apiManagementNamedValueAADIdentityUri": {
+      "type": "string",
+      "defaultValue": "https://login.microsoftonline.com/common"
+    },
+    "apiManagementNamedValueExtensionsKitApiTimeout": {
+      "type": "int",
+      "defaultValue": 10
+    },
+    "apiManagementNamedValueTemplateTenant": {
+      "type": "string",
+      "defaultValue": "{{tenant}}"
+    },
+    "apiManagementNamedValueTemplateTriggerId": {
+      "type": "string",
+      "defaultValue": "{{triggerId}}"
+    },
+
+    "apiManagementWebhookName": {
+      "type": "string",
+      "defaultValue": "Webhook"
+    },
+    "apiManagementWebhookMetadataName": {
+      "type": "string",
+      "defaultValue": "WebhookMetadata"
+    },
+    "apiManagementWebhookVersionSetsName": {
+      "type": "string",
+      "defaultValue": "Webhook"
+    },
+    "apiManagementPolicyName": {
+      "type": "string",
+      "defaultValue": "policy"
+    },
+    "apiManagementWebhookSchemaName": {
+      "type": "string",
+      "defaultValue": "WebhookSchema"
+    },
+    "apiManagementWebhookMetadataSchemaName": {
+      "type": "string",
+      "defaultValue": "WebhookMetadataSchema"
+    },
+    "apiManagementProductsUnlimitedName": {
+      "type": "string",
+      "defaultValue": "unlimited"
+    },
+    "apiManagementProductsStarterName": {
+      "type": "string",
+      "defaultValue": "starter"
+    },
+    "apiManagementProductsDesignName": {
+      "type": "string",
+      "defaultValue": "Design"
+    },
+    "apiManagementWebhookPath": {
+      "type": "string",
+      "defaultValue": "webhook"
+    },
+    "apiManagementWebhookMetadataPath": {
+      "type": "string",
+      "defaultValue": "webhook-metadata"
+    },
+    "apiManagementOperationsGetSchema": {
+      "type": "string",
+      "defaultValue": "GetSchema"
+    },
+    "apiManagementOperationsPostMessage": {
+      "type": "string",
+      "defaultValue": "PostMessage"
+    },
+    "apiManagementOperationsOptionsMessage": {
+      "type": "string",
+      "defaultValue": "OptionsMessage"
+    },
+    "apiManagementOperationsGetMessage": {
+      "type": "string",
+      "defaultValue": "GetMessage"
+    },
+    "apiManagementOperationsPutMessage": {
+      "type": "string",
+      "defaultValue": "PutMessage"
+    },
+    "u4costId": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "enableMTLS": {
+      "type": "bool",
+      "defaultValue": false
+    }
+  },
+
+  "variables": {
+    "location": "[resourceGroup().location]",
+    "policies": "<policies>\r\n  <inbound>\r\n    <base />\r\n    <set-backend-service base-url=\"{{ExtensionsKitWebhookV2Uri}}/api/v2/triggers/http-webhook\" />\r\n    <!-- Get Token from Ids -->\r\n    <send-request ignore-error=\"true\" timeout=\"{{ExtensionsKitApiTimeout}}\" response-variable-name=\"idsResponse\" mode=\"new\">\r\n      <set-url>{{IdentityServicesUri}}/connect/token</set-url>\r\n      <set-method>POST</set-method>\r\n      <set-header name=\"Content-Type\" exists-action=\"override\">\r\n        <value>application/x-www-form-urlencoded</value>\r\n      </set-header>\r\n      <set-body>@{\r\n                        return \"client_id={{InternalClientId}}&amp;scope=u4ek-public-api&amp;client_secret={{InternalClientSecret}}&amp;grant_type=client_credentials\";\r\n                    }</set-body>\r\n    </send-request>\r\n    <!--  Handle Errors, Timeouts while getting access token-->\r\n    <choose>\r\n      <!--  in case of timeouts, the value of idsResponse is null -->\r\n      <when condition=\"@(((IResponse)context.Variables[&quot;idsResponse&quot;]) == null)\">\r\n        <return-response>\r\n          <set-status code=\"429\" reason=\"Too many request\" />\r\n          <set-header name=\"Retry-After\" exists-action=\"override\">\r\n            <value>30</value>\r\n          </set-header>\r\n        </return-response>\r\n      </when>\r\n      <!--  Forward errors while getting access token -->\r\n      <when condition=\"@(((IResponse)context.Variables[&quot;idsResponse&quot;]).StatusCode != 200)\">\r\n        <return-response response-variable-name=\"idsResponse\" />\r\n      </when>\r\n    </choose>\r\n    <set-variable name=\"idsResponseObject\" value=\"@( ((IResponse)context.Variables[&quot;idsResponse&quot;]).Body.As&lt;JObject&gt;())\" />\r\n    <set-variable name=\"idsAccessToken\" value=\"@( ((JObject)context.Variables[&quot;idsResponseObject&quot;])[&quot;access_token&quot;].ToString())\" />\r\n    <set-variable name=\"idsTokenExpiresIn\" value=\"@( ((JObject)context.Variables[&quot;idsResponseObject&quot;])[&quot;expires_in&quot;]?.ToString() ?? &quot;3600&quot;)\" />\r\n    <!-- Get TriggerDefinition from ExtensionsKit API -->\r\n    <send-request ignore-error=\"true\" timeout=\"{{ExtensionsKitApiTimeout}}\" response-variable-name=\"triggerResponse\" mode=\"new\">\r\n      <set-url>@(\"{{ExtensionsKitUri}}/api/v2/triggers/\"+ context.Request.MatchedParameters[\"triggerId\"])</set-url>\r\n      <set-method>GET</set-method>\r\n      <set-header name=\"Authorization\" exists-action=\"override\">\r\n        <value>@(\"Bearer \" + (string)context.Variables[\"idsAccessToken\"])</value>\r\n      </set-header>\r\n    </send-request>\r\n    <!--  Handle Errors, Timeouts while reading Trigger -->\r\n    <choose>\r\n      <!--  in case of timeouts, the value of triggerResponse is null -->\r\n      <when condition=\"@(((IResponse)context.Variables[&quot;triggerResponse&quot;]) == null)\">\r\n        <return-response response-variable-name=\"triggerResponse\">\r\n          <set-status code=\"429\" reason=\"Too many request\" />\r\n          <set-header name=\"Retry-After\" exists-action=\"override\">\r\n            <value>30</value>\r\n          </set-header>\r\n        </return-response>\r\n      </when>\r\n      <!--  Forward errors while getting trigger -->\r\n      <when condition=\"@(((IResponse)context.Variables[&quot;triggerResponse&quot;]).StatusCode != 200)\">\r\n        <return-response response-variable-name=\"triggerResponse\" />\r\n      </when>\r\n      <otherwise />\r\n    </choose>\r\n    <set-variable name=\"triggerResponseObject\" value=\"@( ((IResponse)context.Variables[&quot;triggerResponse&quot;]).Body.As&lt;JObject&gt;())\" />\r\n    <set-variable name=\"triggerConfigObject\" value=\"@( ((JObject)context.Variables[&quot;triggerResponseObject&quot;])[&quot;Config&quot;] )\" />\r\n    <set-variable name=\"triggerConfig-AuthenticationType\" value=\"@( ((JObject)context.Variables[&quot;triggerConfigObject&quot;])[&quot;AuthenticationType&quot;]?.ToString() ?? &quot;&quot; )\" />\r\n    <choose>\r\n      <when condition=\"@(((string)context.Variables[&quot;triggerConfig-AuthenticationType&quot;]).Equals(&quot;Basic&quot;, StringComparison.InvariantCultureIgnoreCase))\">\r\n        <!--  Flow requests  Basic  Authorization -->\r\n        <set-variable name=\"triggerConfig-Authentication-user\" value=\"@( ((JObject)context.Variables[&quot;triggerConfigObject&quot;])[&quot;UserName&quot;]?.ToString() ?? &quot;&quot; )\" />\r\n        <set-variable name=\"triggerConfig-Authentication-password\" value=\"@( ((JObject)context.Variables[&quot;triggerConfigObject&quot;])[&quot;Password&quot;]?.ToString() ?? &quot;&quot; )\" />\r\n        <set-variable name=\"triggerConfig-Authentication-issuer\" value=\"@( ((JObject)context.Variables[&quot;triggerConfigObject&quot;])[&quot;Issuer&quot;]?.ToString() ?? &quot;&quot; )\" />\r\n        <set-variable name=\"triggerConfig-Authentication-basic\" value=\"@(&quot;Basic &quot; + Convert.ToBase64String(Encoding.ASCII.GetBytes(context.Variables[&quot;triggerConfig-Authentication-user&quot;] + &quot;:&quot; + context.Variables[&quot;triggerConfig-Authentication-password&quot;])) )\" />\r\n        <!--  Calculate authorization header value -->\r\n        <check-header name=\"Authorization\" failed-check-httpcode=\"401\" failed-check-error-message=\"Not authorized\" ignore-case=\"false\">\r\n          <value>@((string)context.Variables[\"triggerConfig-Authentication-basic\"])</value>\r\n        </check-header>\r\n      </when>\r\n      <when condition=\"@(((string)context.Variables[&quot;triggerConfig-AuthenticationType&quot;]).Equals(&quot;U4IDS&quot;, StringComparison.InvariantCultureIgnoreCase))\">\r\n        <validate-jwt header-name=\"Authorization\">\r\n          <openid-config url=\"{{IdentityServicesUri}}/.well-known/openid-configuration\" />\r\n        </validate-jwt>\r\n        <set-variable name=\"jwtToken\" value=\"@( context.Request.Headers[&quot;Authorization&quot;]?.First()?.Substring(&quot;Bearer &quot;.Length)?.AsJwt() )\" />\r\n      </when>\r\n      <when condition=\"@(((string)context.Variables[&quot;triggerConfig-AuthenticationType&quot;]).Equals(&quot;AAD&quot;, StringComparison.InvariantCultureIgnoreCase))\">\r\n        <trace source=\"Trace\">\"AAD {{AADIdentityUri}}\"</trace>\r\n        <validate-jwt header-name=\"Authorization\">\r\n          <openid-config url=\"{{AADIdentityUri}}/.well-known/openid-configuration\" />\r\n        </validate-jwt>\r\n        <set-variable name=\"jwtToken\" value=\"@( context.Request.Headers[&quot;Authorization&quot;]?.First()?.Substring(&quot;Bearer &quot;.Length)?.AsJwt() )\" />\r\n      </when>\r\n    </choose>\r\n    <choose>\r\n      <when condition=\"@(context.Variables.ContainsKey(&quot;jwtToken&quot;))\">\r\n        <set-variable name=\"claimsFound\" value=\"@{                                 &#xA;                    Jwt jwtToken = ((Jwt)context.Variables[&quot;jwtToken&quot;]);&#xA;                    JObject triggerConfigObject = (JObject)context.Variables[&quot;triggerConfigObject&quot;];&#xA;                    if (triggerConfigObject[&quot;ClaimRules&quot;] != null &amp;&amp; triggerConfigObject[&quot;ClaimRules&quot;].Type == JTokenType.Object) {   &#xA;                        foreach(var rule in ((JObject)triggerConfigObject[&quot;ClaimRules&quot;]).Properties()) &#xA;                        {                        &#xA;                            var value = rule.Last()?.ToString();&#xA;                            string[] claims;&#xA;                            if (!jwtToken.Claims.TryGetValue(rule.Name, out claims)) {&#xA;                                return false;    &#xA;                            }&#xA;                            &#xA;                            switch (value)&#xA;                            {&#xA;                                case &quot;{{Template-Tenant}}&quot;:&#xA;                                    value = triggerConfigObject[&quot;TenantId&quot;].ToString();&#xA;                                    break;&#xA;                                case &quot;{{Template-TriggerId}}&quot;:&#xA;                                    value = triggerConfigObject[&quot;TriggerId&quot;].ToString();&#xA;                                    break;&#xA;                            }&#xA;                            if (!claims.Contains(value)) {&#xA;                                return false;&#xA;                            }&#xA;                        }&#xA;                    }&#xA;                    return true;&#xA;                }\" />\r\n        <choose>\r\n          <when condition=\"@( ((bool)context.Variables[&quot;claimsFound&quot;]) != true)\">\r\n            <return-response>\r\n              <set-status code=\"401\" reason=\"Requested claims not present\" />\r\n            </return-response>\r\n          </when>\r\n        </choose>\r\n      </when>\r\n    </choose>\r\n    <!-- Incoming certificate verificaction -->\r\n    <set-variable name=\"triggerConfig-Certificate\" value=\"@( ((JObject)context.Variables[&quot;triggerConfigObject&quot;])[&quot;Certificate&quot;]?.ToString() ?? &quot;&quot; )\" />\r\n    <!-- If trigger config certificate field is populated, we must receive a certificate -->\r\n    <choose>\r\n      <when condition=\"@( (string)context.Variables[&quot;triggerConfig-Certificate&quot;] != null &amp;&amp; (string)context.Variables[&quot;triggerConfig-Certificate&quot;] != &quot;&quot; &amp;&amp; context.Request.Certificate == null)\">\r\n        <return-response>\r\n          <set-status code=\"403\" reason=\"No certificate provided\" />\r\n        </return-response>\r\n      </when>\r\n    </choose>\r\n    <!-- Check incoming certificate validity -->\r\n    <validate-client-certificate validate-revocation=\"false\" validate-trust=\"false\" validate-not-before=\"true\" validate-not-after=\"true\" ignore-error=\"false\" />\r\n    <!-- Check certificate thumbprint with ExtensionsKit API -->\r\n    <set-variable name=\"incomingThumbprint\" value=\"@(context.Request.Certificate.Thumbprint)\" />\r\n    <set-variable name=\"tenantId\" value=\"@( ((JObject)context.Variables[&quot;triggerResponseObject&quot;])[&quot;TenantId&quot;]?.ToString() ?? &quot;&quot; )\" />\r\n    <send-request ignore-error=\"true\" timeout=\"{{ExtensionsKitApiTimeout}}\" response-variable-name=\"certificateResponse\" mode=\"new\">\r\n      <set-url>@(\"{{ExtensionsKitUri}}/api/v2/tenants/\"+ (string) context.Variables[\"tenantId\"] + \"/certificates/\" + (string)context.Variables[\"triggerConfig-Certificate\"] + \"/verification\")</set-url>\r\n      <set-method>POST</set-method>\r\n      <set-header name=\"Authorization\" exists-action=\"override\">\r\n        <value>@(\"Bearer \" + (string)context.Variables[\"idsAccessToken\"])</value>\r\n      </set-header>\r\n      <set-header name=\"Content-Type\" exists-action=\"override\">\r\n        <value>application/json</value>\r\n      </set-header>\r\n      <set-body>@(new JObject(\r\n                    new JProperty(\"thumbprint\",((string)context.Variables[\"incomingThumbprint\"]))\r\n            ).ToString())</set-body>\r\n    </send-request>\r\n    <choose>\r\n      <!--  in case of timeouts, the value of certificateResponse is null -->\r\n      <when condition=\"@(((IResponse)context.Variables[&quot;certificateResponse&quot;]) == null)\">\r\n        <return-response response-variable-name=\"certificateResponse\">\r\n          <set-status code=\"429\" reason=\"Too many request\" />\r\n          <set-header name=\"Retry-After\" exists-action=\"override\">\r\n            <value>30</value>\r\n          </set-header>\r\n        </return-response>\r\n      </when>\r\n      <!--  Forward errors while checking certificate -->\r\n      <when condition=\"@(((IResponse)context.Variables[&quot;certificateResponse&quot;]).StatusCode != 200)\">\r\n        <return-response response-variable-name=\"certificateResponse\" />\r\n      </when>\r\n      <otherwise>\r\n        <set-variable name=\"certificateObject\" value=\"@( ((IResponse)context.Variables[&quot;certificateResponse&quot;]).Body.As&lt;JObject&gt;())\" />\r\n        <set-variable name=\"certificatesMatch\" value=\"@{&#xA;                    return Convert.ToBoolean(((JObject)context.Variables[&quot;certificateObject&quot;])[&quot;certificatesMatch&quot;]);&#xA;                }\" />\r\n        <choose>\r\n          <when condition=\"@( (bool) context.Variables[&quot;certificatesMatch&quot;] != true )\">\r\n            <return-response>\r\n              <set-status code=\"403\" reason=\"Certificates do not match\" />\r\n            </return-response>\r\n          </when>\r\n        </choose>\r\n      </otherwise>\r\n    </choose>\r\n    <!--  Don't expose APIM subscription key to the backend. -->\r\n    <set-header name=\"Ocp-Apim-Subscription-Key\" exists-action=\"delete\" />\r\n  </inbound>\r\n  <backend>\r\n    <base />\r\n  </backend>\r\n  <outbound>\r\n    <base />\r\n  </outbound>\r\n  <on-error>\r\n    <base />\r\n  </on-error>\r\n</policies>"
+  },
+
+  "resources": [
+    {
+      "apiVersion": "2019-12-01",
+      "type": "Microsoft.ApiManagement/service",
+      "name": "[parameters('apiManagementName')]",
+      "location": "[variables('location')]",
+      "dependsOn": [],
+      "sku": {
+        "name": "[parameters('apiManagementSkuName')]",
+        "capacity": "[parameters('apiManagementSkuCapacity')]"
+      },
+      "tags": {
+        "U4COSTID": "[parameters('u4costId')]"
+      },
+      "scale": null,
+      "properties": {
+        "publisherEmail": "[parameters('ekOwnerEmail')]",
+        "publisherName": "[parameters('ekOwnerName')]",
+        "notificationSenderEmail": "apimgmt-noreply@mail.windowsazure.com",
+        "hostnameConfigurations": [],
+        "additionalLocations": null,
+        "virtualNetworkConfiguration": null,
+        "virtualNetworkType": "None",
+        "certificates": null,
+        "enableClientCertificate": "[parameters('enableMTLS')]"
+      }
+    },
+    {
+      "apiVersion": "2019-12-01",
+      "type": "Microsoft.ApiManagement/service/namedValues",
+      "name": "[concat(parameters('apiManagementName'), '/AADIdentityUri')]",
+      "scale": null,
+      "properties": {
+        "displayName": "AADIdentityUri",
+        "value": "[parameters('apiManagementNamedValueAADIdentityUri')]",
+        "secret": false
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service', parameters('apiManagementName'))]"
+      ]
+    },
+    {
+      "apiVersion": "2019-12-01",
+      "type": "Microsoft.ApiManagement/service/namedValues",
+      "name": "[concat(parameters('apiManagementName'), '/ExtensionsKitApiTimeout')]",
+      "scale": null,
+      "properties": {
+        "displayName": "ExtensionsKitApiTimeout",
+        "value": "[parameters('apiManagementNamedValueExtensionsKitApiTimeout')]",
+        "secret": false
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service', parameters('apiManagementName'))]"
+      ]
+    },
+    {
+      "apiVersion": "2019-12-01",
+      "type": "Microsoft.ApiManagement/service/namedValues",
+      "name": "[concat(parameters('apiManagementName'), '/ExtensionsKitUri')]",
+      "scale": null,
+      "properties": {
+        "displayName": "ExtensionsKitUri",
+        "value": "[parameters('apiManagementNamedValueExtensionsKitUri')]",
+        "secret": false
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service', parameters('apiManagementName'))]"
+      ]
+    },
+    {
+      "apiVersion": "2019-12-01",
+      "type": "Microsoft.ApiManagement/service/namedValues",
+      "name": "[concat(parameters('apiManagementName'), '/ExtensionsKitWebhookUri')]",
+      "scale": null,
+      "properties": {
+        "displayName": "ExtensionsKitWebhookUri",
+        "value": "[parameters('apiManagementNamedValueExtensionsKitWebhookUri')]",
+        "secret": false
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service', parameters('apiManagementName'))]"
+      ]
+    },
+    {
+      "apiVersion": "2019-12-01",
+      "type": "Microsoft.ApiManagement/service/namedValues",
+      "name": "[concat(parameters('apiManagementName'), '/ExtensionsKitWebhookV2Uri')]",
+      "scale": null,
+      "properties": {
+        "displayName": "ExtensionsKitWebhookV2Uri",
+        "value": "[parameters('apiManagementNamedValueExtensionsKitWebhookV2Uri')]",
+        "secret": false
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service', parameters('apiManagementName'))]"
+      ]
+    },
+    {
+      "apiVersion": "2019-12-01",
+      "type": "Microsoft.ApiManagement/service/namedValues",
+      "name": "[concat(parameters('apiManagementName'), '/IdentityServicesUri')]",
+      "scale": null,
+      "properties": {
+        "displayName": "IdentityServicesUri",
+        "value": "[parameters('idsUri')]",
+        "secret": false
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service', parameters('apiManagementName'))]"
+      ]
+    },
+    {
+      "apiVersion": "2019-12-01",
+      "type": "Microsoft.ApiManagement/service/namedValues",
+      "name": "[concat(parameters('apiManagementName'), '/InternalClientId')]",
+      "scale": null,
+      "properties": {
+        "displayName": "InternalClientId",
+        "value": "[parameters('ekInternalClientId')]",
+        "secret": false
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service', parameters('apiManagementName'))]"
+      ]
+    },
+    {
+      "apiVersion": "2019-12-01",
+      "type": "Microsoft.ApiManagement/service/namedValues",
+      "name": "[concat(parameters('apiManagementName'), '/InternalClientSecret')]",
+      "scale": null,
+      "properties": {
+        "displayName": "InternalClientSecret",
+        "value": "[parameters('ekInternalClientSecret')]",
+        "secret": false
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service', parameters('apiManagementName'))]"
+      ]
+    },
+    {
+      "apiVersion": "2019-12-01",
+      "type": "Microsoft.ApiManagement/service/namedValues",
+      "name": "[concat(parameters('apiManagementName'), '/Template-Tenant')]",
+      "scale": null,
+      "properties": {
+        "displayName": "Template-Tenant",
+        "value": "[parameters('apiManagementNamedValueTemplateTenant')]",
+        "secret": false
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service', parameters('apiManagementName'))]"
+      ]
+    },
+    {
+      "apiVersion": "2019-12-01",
+      "type": "Microsoft.ApiManagement/service/namedValues",
+      "name": "[concat(parameters('apiManagementName'), '/Template-TriggerId')]",
+      "scale": null,
+      "properties": {
+        "displayName": "Template-TriggerId",
+        "value": "[parameters('apiManagementNamedValueTemplateTriggerId')]",
+        "secret": false
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service', parameters('apiManagementName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.ApiManagement/service/apiVersionSets",
+      "name": "[concat(parameters('apiManagementName'), '/', parameters('apiManagementWebhookVersionSetsName'))]",
+      "apiVersion": "2019-12-01",
+      "scale": null,
+      "properties": {
+        "displayName": "[parameters('apiManagementWebhookVersionSetsName')]",
+        "description": null,
+        "versioningScheme": "Segment",
+        "versionQueryName": null,
+        "versionHeaderName": null
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service', parameters('apiManagementName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.ApiManagement/service/apis",
+      "name": "[concat(parameters('apiManagementName'), '/', parameters('apiManagementWebhookName'))]",
+      "apiVersion": "2019-12-01",
+      "scale": null,
+      "properties": {
+        "displayName": "[concat('Unit4 Extensions Kit ', parameters('apiManagementWebhookName'))]",
+        "apiRevision": "1",
+        "description": "[concat('Unit4 Extensions Kit ', parameters('apiManagementWebhookName'))]",
+        "serviceUrl": "[parameters('apiManagementNamedValueExtensionsKitWebhookUri')]",
+        "path": "[parameters('apiManagementWebhookPath')]",
+        "protocols": [
+          "https"
+        ],
+        "authenticationSettings": null,
+        "subscriptionKeyParameterNames": null,
+        "apiVersion": "v1",
+        "apiVersionSetId": "[resourceId('Microsoft.ApiManagement/service/apiVersionSets', parameters('apiManagementName'), parameters('apiManagementWebhookVersionSetsName'))]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service', parameters('apiManagementName'))]",
+        "[resourceId('Microsoft.ApiManagement/service/apiVersionSets', parameters('apiManagementName'), parameters('apiManagementWebhookVersionSetsName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.ApiManagement/service/apis",
+      "name": "[concat(parameters('apiManagementName'), '/', parameters('apiManagementWebhookMetadataName'))]",
+      "apiVersion": "2019-12-01",
+      "scale": null,
+      "properties": {
+        "displayName": "[concat('Unit4 Extensions Kit ', parameters('apiManagementWebhookMetadataName'))]",
+        "apiRevision": "1",
+        "description": "[concat('Unit4 Extensions Kit ', parameters('apiManagementWebhookMetadataName'))]",
+        "serviceUrl": "[parameters('apiManagementNamedValueExtensionsKitWebhookUri')]",
+        "path": "[parameters('apiManagementWebhookMetadataPath')]",
+        "protocols": [
+          "https"
+        ],
+        "authenticationSettings": null,
+        "subscriptionKeyParameterNames": null,
+        "apiVersion": "v1",
+        "apiVersionSetId": "[resourceId('Microsoft.ApiManagement/service/apiVersionSets', parameters('apiManagementName'), parameters('apiManagementWebhookVersionSetsName'))]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service', parameters('apiManagementName'))]",
+        "[resourceId('Microsoft.ApiManagement/service/apiVersionSets', parameters('apiManagementName'), parameters('apiManagementWebhookVersionSetsName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.ApiManagement/service/apis",
+      "name": "[concat(parameters('apiManagementName'), '/', parameters('apiManagementWebhookName'), 'v2')]",
+      "apiVersion": "2019-12-01",
+      "scale": null,
+      "properties": {
+        "displayName": "[concat('Unit4 Extensions Kit ', parameters('apiManagementWebhookName'))]",
+        "apiRevision": "1",
+        "description": "[concat('Unit4 Extensions Kit ', parameters('apiManagementWebhookName'))]",
+        "serviceUrl": "[parameters('apiManagementNamedValueExtensionsKitWebhookV2Uri')]",
+        "path": "[parameters('apiManagementWebhookPath')]",
+        "protocols": [
+          "https"
+        ],
+        "authenticationSettings": null,
+        "subscriptionKeyParameterNames": null,
+        "apiVersion": "v2",
+        "apiVersionSetId": "[resourceId('Microsoft.ApiManagement/service/apiVersionSets', parameters('apiManagementName'), parameters('apiManagementWebhookVersionSetsName'))]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service', parameters('apiManagementName'))]",
+        "[resourceId('Microsoft.ApiManagement/service/apiVersionSets', parameters('apiManagementName'), parameters('apiManagementWebhookVersionSetsName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.ApiManagement/service/apis",
+      "name": "[concat(parameters('apiManagementName'), '/', parameters('apiManagementWebhookMetadataName'), 'v2')]",
+      "apiVersion": "2019-12-01",
+      "scale": null,
+      "properties": {
+        "displayName": "[concat('Unit4 Extensions Kit ', parameters('apiManagementWebhookMetadataName'))]",
+        "apiRevision": "1",
+        "description": "[concat('Unit4 Extensions Kit ', parameters('apiManagementWebhookMetadataName'))]",
+        "serviceUrl": "[parameters('apiManagementNamedValueExtensionsKitWebhookV2Uri')]",
+        "path": "[parameters('apiManagementWebhookMetadataPath')]",
+        "protocols": [
+          "https"
+        ],
+        "authenticationSettings": null,
+        "subscriptionKeyParameterNames": null,
+        "apiVersion": "v2",
+        "apiVersionSetId": "[resourceId('Microsoft.ApiManagement/service/apiVersionSets', parameters('apiManagementName'), parameters('apiManagementWebhookVersionSetsName'))]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service', parameters('apiManagementName'))]",
+        "[resourceId('Microsoft.ApiManagement/service/apiVersionSets', parameters('apiManagementName'), parameters('apiManagementWebhookVersionSetsName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.ApiManagement/service/products",
+      "name": "[concat(parameters('apiManagementName'), '/', parameters('apiManagementProductsStarterName'))]",
+      "apiVersion": "2019-12-01",
+      "scale": null,
+      "properties": {
+        "displayName": "[parameters('apiManagementProductsStarterName')]",
+        "description": "Subscribers will be able to run 5 calls/minute up to a maximum of 100 calls/week.",
+        "terms": "",
+        "subscriptionRequired": true,
+        "approvalRequired": false,
+        "subscriptionsLimit": 1,
+        "state": "published"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service', parameters('apiManagementName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.ApiManagement/service/products/apis",
+      "name": "[concat(parameters('apiManagementName'), '/', parameters('apiManagementProductsStarterName'), '/', parameters('apiManagementWebhookName'))]",
+      "apiVersion": "2019-12-01",
+      "scale": null,
+      "properties": {
+        "displayName": "[concat('Unit4 Extensions Kit ', parameters('apiManagementWebhookName'))]",
+        "apiRevision": "1",
+        "description": "[concat('Unit4 Extensions Kit ', parameters('apiManagementWebhookName'))]",
+        "serviceUrl": "[parameters('apiManagementNamedValueExtensionsKitWebhookUri')]",
+        "path": "[parameters('apiManagementWebhookPath')]",
+        "protocols": [
+          "https"
+        ],
+        "authenticationSettings": null,
+        "subscriptionKeyParameterNames": null,
+        "isCurrent": true,
+        "apiVersion": "v1",
+        "apiVersionSetId": "[resourceId('Microsoft.ApiManagement/service/apiVersionSets', parameters('apiManagementName'), parameters('apiManagementWebhookVersionSetsName'))]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service', parameters('apiManagementName'))]",
+        "[resourceId('Microsoft.ApiManagement/service/products', parameters('apiManagementName'), parameters('apiManagementProductsStarterName'))]",
+        "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apiManagementName'), parameters('apiManagementWebhookName'))]",
+        "[resourceId('Microsoft.ApiManagement/service/apiVersionSets', parameters('apiManagementName'), parameters('apiManagementWebhookVersionSetsName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.ApiManagement/service/products/apis",
+      "name": "[concat(parameters('apiManagementName'), '/', parameters('apiManagementProductsStarterName'), '/', parameters('apiManagementWebhookMetadataName'))]",
+      "apiVersion": "2019-12-01",
+      "scale": null,
+      "properties": {
+        "displayName": "[concat('Unit4 Extensions Kit ', parameters('apiManagementWebhookMetadataName'))]",
+        "apiRevision": "1",
+        "description": "[concat('Unit4 Extensions Kit ', parameters('apiManagementWebhookMetadataName'))]",
+        "serviceUrl": "[parameters('apiManagementNamedValueExtensionsKitWebhookUri')]",
+        "path": "[parameters('apiManagementWebhookMetadataPath')]",
+        "protocols": [
+          "https"
+        ],
+        "authenticationSettings": null,
+        "subscriptionKeyParameterNames": null,
+        "isCurrent": true,
+        "apiVersion": "v1",
+        "apiVersionSetId": "[resourceId('Microsoft.ApiManagement/service/apiVersionSets', parameters('apiManagementName'), parameters('apiManagementWebhookVersionSetsName'))]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service', parameters('apiManagementName'))]",
+        "[resourceId('Microsoft.ApiManagement/service/products', parameters('apiManagementName'), parameters('apiManagementProductsStarterName'))]",
+        "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apiManagementName'), parameters('apiManagementWebhookMetadataName'))]",
+        "[resourceId('Microsoft.ApiManagement/service/apiVersionSets', parameters('apiManagementName'), parameters('apiManagementWebhookVersionSetsName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.ApiManagement/service/products/apis",
+      "name": "[concat(parameters('apiManagementName'), '/', parameters('apiManagementProductsStarterName'), '/', parameters('apiManagementWebhookName'), 'v2')]",
+      "apiVersion": "2019-12-01",
+      "scale": null,
+      "properties": {
+        "displayName": "[concat('Unit4 Extensions Kit ', parameters('apiManagementWebhookName'))]",
+        "apiRevision": "1",
+        "description": "[concat('Unit4 Extensions Kit ', parameters('apiManagementWebhookName'))]",
+        "serviceUrl": "[parameters('apiManagementNamedValueExtensionsKitWebhookV2Uri')]",
+        "path": "[parameters('apiManagementWebhookPath')]",
+        "protocols": [
+          "https"
+        ],
+        "authenticationSettings": null,
+        "subscriptionKeyParameterNames": null,
+        "isCurrent": true,
+        "apiVersion": "v2",
+        "apiVersionSetId": "[resourceId('Microsoft.ApiManagement/service/apiVersionSets', parameters('apiManagementName'), parameters('apiManagementWebhookVersionSetsName'))]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service', parameters('apiManagementName'))]",
+        "[resourceId('Microsoft.ApiManagement/service/products', parameters('apiManagementName'), parameters('apiManagementProductsStarterName'))]",
+        "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apiManagementName'), concat(parameters('apiManagementWebhookName'), 'v2'))]",
+        "[resourceId('Microsoft.ApiManagement/service/apiVersionSets', parameters('apiManagementName'), parameters('apiManagementWebhookVersionSetsName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.ApiManagement/service/products/apis",
+      "name": "[concat(parameters('apiManagementName'), '/', parameters('apiManagementProductsStarterName'), '/', parameters('apiManagementWebhookMetadataName'), 'v2')]",
+      "apiVersion": "2019-12-01",
+      "scale": null,
+      "properties": {
+        "displayName": "[concat('Unit4 Extensions Kit ', parameters('apiManagementWebhookMetadataName'))]",
+        "apiRevision": "1",
+        "description": "[concat('Unit4 Extensions Kit ', parameters('apiManagementWebhookMetadataName'))]",
+        "serviceUrl": "[parameters('apiManagementNamedValueExtensionsKitWebhookV2Uri')]",
+        "path": "[parameters('apiManagementWebhookMetadataPath')]",
+        "protocols": [
+          "https"
+        ],
+        "authenticationSettings": null,
+        "subscriptionKeyParameterNames": null,
+        "isCurrent": true,
+        "apiVersion": "v2",
+        "apiVersionSetId": "[resourceId('Microsoft.ApiManagement/service/apiVersionSets', parameters('apiManagementName'), parameters('apiManagementWebhookVersionSetsName'))]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service', parameters('apiManagementName'))]",
+        "[resourceId('Microsoft.ApiManagement/service/products', parameters('apiManagementName'), parameters('apiManagementProductsStarterName'))]",
+        "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apiManagementName'), concat(parameters('apiManagementWebhookName'), 'v2'))]",
+        "[resourceId('Microsoft.ApiManagement/service/apiVersionSets', parameters('apiManagementName'), parameters('apiManagementWebhookVersionSetsName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.ApiManagement/service/products",
+      "name": "[concat(parameters('apiManagementName'), '/', parameters('apiManagementProductsDesignName'))]",
+      "apiVersion": "2019-12-01",
+      "scale": null,
+      "properties": {
+        "displayName": "[parameters('apiManagementProductsDesignName')]",
+        "description": "Exposes the Webhook Metadata to be used from LogicApps and other third party products",
+        "terms": null,
+        "subscriptionRequired": false,
+        "approvalRequired": null,
+        "subscriptionsLimit": null,
+        "state": "published"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service', parameters('apiManagementName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.ApiManagement/service/products/apis",
+      "name": "[concat(parameters('apiManagementName'), '/', parameters('apiManagementProductsDesignName'), '/', parameters('apiManagementWebhookName'))]",
+      "apiVersion": "2019-12-01",
+      "scale": null,
+      "properties": {
+        "displayName": "[concat('Unit4 Extensions Kit ', parameters('apiManagementWebhookName'))]",
+        "apiRevision": "1",
+        "description": "[concat('Unit4 Extensions Kit ', parameters('apiManagementWebhookName'))]",
+        "serviceUrl": "[parameters('apiManagementNamedValueExtensionsKitWebhookUri')]",
+        "path": "[parameters('apiManagementWebhookPath')]",
+        "protocols": [
+          "https"
+        ],
+        "authenticationSettings": null,
+        "subscriptionKeyParameterNames": null,
+        "isCurrent": true,
+        "apiVersion": "v1",
+        "apiVersionSetId": "[resourceId('Microsoft.ApiManagement/service/apiVersionSets', parameters('apiManagementName'), parameters('apiManagementWebhookVersionSetsName'))]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service', parameters('apiManagementName'))]",
+        "[resourceId('Microsoft.ApiManagement/service/products', parameters('apiManagementName'), parameters('apiManagementProductsDesignName'))]",
+        "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apiManagementName'), parameters('apiManagementWebhookName'))]",
+        "[resourceId('Microsoft.ApiManagement/service/apiVersionSets', parameters('apiManagementName'), parameters('apiManagementWebhookVersionSetsName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.ApiManagement/service/products/apis",
+      "name": "[concat(parameters('apiManagementName'), '/', parameters('apiManagementProductsDesignName'), '/', parameters('apiManagementWebhookMetadataName'))]",
+      "apiVersion": "2019-12-01",
+      "scale": null,
+      "properties": {
+        "displayName": "[concat('Unit4 Extensions Kit ', parameters('apiManagementWebhookMetadataName'))]",
+        "apiRevision": "1",
+        "description": "[concat('Unit4 Extensions Kit ', parameters('apiManagementWebhookMetadataName'))]",
+        "serviceUrl": "[parameters('apiManagementNamedValueExtensionsKitWebhookUri')]",
+        "path": "[parameters('apiManagementWebhookMetadataPath')]",
+        "protocols": [
+          "https"
+        ],
+        "authenticationSettings": null,
+        "subscriptionKeyParameterNames": null,
+        "isCurrent": true,
+        "apiVersion": "v1",
+        "apiVersionSetId": "[resourceId('Microsoft.ApiManagement/service/apiVersionSets', parameters('apiManagementName'), parameters('apiManagementWebhookVersionSetsName'))]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service', parameters('apiManagementName'))]",
+        "[resourceId('Microsoft.ApiManagement/service/products', parameters('apiManagementName'), parameters('apiManagementProductsDesignName'))]",
+        "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apiManagementName'), parameters('apiManagementWebhookMetadataName'))]",
+        "[resourceId('Microsoft.ApiManagement/service/apiVersionSets', parameters('apiManagementName'), parameters('apiManagementWebhookVersionSetsName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.ApiManagement/service/products/apis",
+      "name": "[concat(parameters('apiManagementName'), '/', parameters('apiManagementProductsDesignName'), '/', parameters('apiManagementWebhookName'), 'v2')]",
+      "apiVersion": "2019-12-01",
+      "scale": null,
+      "properties": {
+        "displayName": "[concat('Unit4 Extensions Kit ', parameters('apiManagementWebhookName'))]",
+        "apiRevision": "1",
+        "description": "[concat('Unit4 Extensions Kit ', parameters('apiManagementWebhookName'))]",
+        "serviceUrl": "[parameters('apiManagementNamedValueExtensionsKitWebhookV2Uri')]",
+        "path": "[parameters('apiManagementWebhookPath')]",
+        "protocols": [
+          "https"
+        ],
+        "authenticationSettings": null,
+        "subscriptionKeyParameterNames": null,
+        "isCurrent": true,
+        "apiVersion": "v2",
+        "apiVersionSetId": "[resourceId('Microsoft.ApiManagement/service/apiVersionSets', parameters('apiManagementName'), parameters('apiManagementWebhookVersionSetsName'))]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service', parameters('apiManagementName'))]",
+        "[resourceId('Microsoft.ApiManagement/service/products', parameters('apiManagementName'), parameters('apiManagementProductsDesignName'))]",
+        "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apiManagementName'), concat(parameters('apiManagementWebhookName'), 'v2'))]",
+        "[resourceId('Microsoft.ApiManagement/service/apiVersionSets', parameters('apiManagementName'), parameters('apiManagementWebhookVersionSetsName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.ApiManagement/service/products/apis",
+      "name": "[concat(parameters('apiManagementName'), '/', parameters('apiManagementProductsDesignName'), '/', parameters('apiManagementWebhookMetadataName'), 'v2')]",
+      "apiVersion": "2019-12-01",
+      "scale": null,
+      "properties": {
+        "displayName": "[concat('Unit4 Extensions Kit ', parameters('apiManagementWebhookMetadataName'))]",
+        "apiRevision": "1",
+        "description": "[concat('Unit4 Extensions Kit ', parameters('apiManagementWebhookMetadataName'))]",
+        "serviceUrl": "[parameters('apiManagementNamedValueExtensionsKitWebhookV2Uri')]",
+        "path": "[parameters('apiManagementWebhookMetadataPath')]",
+        "protocols": [
+          "https"
+        ],
+        "authenticationSettings": null,
+        "subscriptionKeyParameterNames": null,
+        "isCurrent": true,
+        "apiVersion": "v2",
+        "apiVersionSetId": "[resourceId('Microsoft.ApiManagement/service/apiVersionSets', parameters('apiManagementName'), parameters('apiManagementWebhookVersionSetsName'))]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service', parameters('apiManagementName'))]",
+        "[resourceId('Microsoft.ApiManagement/service/products', parameters('apiManagementName'), parameters('apiManagementProductsDesignName'))]",
+        "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apiManagementName'), concat(parameters('apiManagementWebhookMetadataName'), 'v2'))]",
+        "[resourceId('Microsoft.ApiManagement/service/apiVersionSets', parameters('apiManagementName'), parameters('apiManagementWebhookVersionSetsName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.ApiManagement/service/products",
+      "name": "[concat(parameters('apiManagementName'), '/', parameters('apiManagementProductsUnlimitedName'))]",
+      "apiVersion": "2019-12-01",
+      "scale": null,
+      "properties": {
+        "displayName": "[parameters('apiManagementProductsUnlimitedName')]",
+        "description": "[concat('Subscribers have completely ', parameters('apiManagementProductsUnlimitedName'),' access to the API. Administrator approval is required.')]",
+        "terms": null,
+        "subscriptionRequired": true,
+        "approvalRequired": true,
+        "subscriptionsLimit": 1,
+        "state": "published"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service', parameters('apiManagementName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.ApiManagement/service/products/apis",
+      "name": "[concat(parameters('apiManagementName'), '/', parameters('apiManagementProductsUnlimitedName'), '/', parameters('apiManagementWebhookName'))]",
+      "apiVersion": "2019-12-01",
+      "scale": null,
+      "properties": {
+        "displayName": "[concat('Unit4 Extensions Kit ', parameters('apiManagementWebhookName'))]",
+        "apiRevision": "1",
+        "description": "[concat('Unit4 Extensions Kit ', parameters('apiManagementWebhookName'))]",
+        "serviceUrl": "[parameters('apiManagementNamedValueExtensionsKitWebhookUri')]",
+        "path": "[parameters('apiManagementWebhookPath')]",
+        "protocols": [
+          "https"
+        ],
+        "authenticationSettings": null,
+        "subscriptionKeyParameterNames": null,
+        "isCurrent": true,
+        "apiVersion": "v1",
+        "apiVersionSetId": "[resourceId('Microsoft.ApiManagement/service/apiVersionSets', parameters('apiManagementName'), parameters('apiManagementWebhookVersionSetsName'))]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service', parameters('apiManagementName'))]",
+        "[resourceId('Microsoft.ApiManagement/service/products', parameters('apiManagementName'), parameters('apiManagementProductsUnlimitedName'))]",
+        "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apiManagementName'), parameters('apiManagementWebhookName'))]",
+        "[resourceId('Microsoft.ApiManagement/service/apiVersionSets', parameters('apiManagementName'), parameters('apiManagementWebhookVersionSetsName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.ApiManagement/service/products/apis",
+      "name": "[concat(parameters('apiManagementName'), '/', parameters('apiManagementProductsUnlimitedName'), '/', parameters('apiManagementWebhookMetadataName'))]",
+      "apiVersion": "2019-12-01",
+      "scale": null,
+      "properties": {
+        "displayName": "[concat('Unit4 Extensions Kit ', parameters('apiManagementWebhookMetadataName'))]",
+        "apiRevision": "1",
+        "description": "[concat('Unit4 Extensions Kit ', parameters('apiManagementWebhookMetadataName'))]",
+        "serviceUrl": "[parameters('apiManagementNamedValueExtensionsKitWebhookUri')]",
+        "path": "[parameters('apiManagementWebhookMetadataPath')]",
+        "protocols": [
+          "https"
+        ],
+        "authenticationSettings": null,
+        "subscriptionKeyParameterNames": null,
+        "isCurrent": true,
+        "apiVersion": "v1",
+        "apiVersionSetId": "[resourceId('Microsoft.ApiManagement/service/apiVersionSets', parameters('apiManagementName'), parameters('apiManagementWebhookVersionSetsName'))]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service', parameters('apiManagementName'))]",
+        "[resourceId('Microsoft.ApiManagement/service/products', parameters('apiManagementName'), parameters('apiManagementProductsUnlimitedName'))]",
+        "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apiManagementName'), parameters('apiManagementWebhookMetadataName'))]",
+        "[resourceId('Microsoft.ApiManagement/service/apiVersionSets', parameters('apiManagementName'), parameters('apiManagementWebhookVersionSetsName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.ApiManagement/service/products/apis",
+      "name": "[concat(parameters('apiManagementName'), '/', parameters('apiManagementProductsUnlimitedName'), '/', parameters('apiManagementWebhookName'), 'v2')]",
+      "apiVersion": "2019-12-01",
+      "scale": null,
+      "properties": {
+        "displayName": "[concat('Unit4 Extensions Kit ', parameters('apiManagementWebhookName'))]",
+        "apiRevision": "1",
+        "description": "[concat('Unit4 Extensions Kit ', parameters('apiManagementWebhookName'))]",
+        "serviceUrl": "[parameters('apiManagementNamedValueExtensionsKitWebhookV2Uri')]",
+        "path": "[parameters('apiManagementWebhookPath')]",
+        "protocols": [
+          "https"
+        ],
+        "authenticationSettings": null,
+        "subscriptionKeyParameterNames": null,
+        "isCurrent": true,
+        "apiVersion": "v2",
+        "apiVersionSetId": "[resourceId('Microsoft.ApiManagement/service/apiVersionSets', parameters('apiManagementName'), parameters('apiManagementWebhookVersionSetsName'))]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service', parameters('apiManagementName'))]",
+        "[resourceId('Microsoft.ApiManagement/service/products', parameters('apiManagementName'), parameters('apiManagementProductsUnlimitedName'))]",
+        "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apiManagementName'), concat(parameters('apiManagementWebhookName'), 'v2'))]",
+        "[resourceId('Microsoft.ApiManagement/service/apiVersionSets', parameters('apiManagementName'), parameters('apiManagementWebhookVersionSetsName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.ApiManagement/service/products/apis",
+      "name": "[concat(parameters('apiManagementName'), '/', parameters('apiManagementProductsUnlimitedName'), '/', parameters('apiManagementWebhookMetadataName'), 'v2')]",
+      "apiVersion": "2019-12-01",
+      "scale": null,
+      "properties": {
+        "displayName": "[concat('Unit4 Extensions Kit ', parameters('apiManagementWebhookMetadataName'))]",
+        "apiRevision": "1",
+        "description": "[concat('Unit4 Extensions Kit ', parameters('apiManagementWebhookMetadataName'))]",
+        "serviceUrl": "[parameters('apiManagementNamedValueExtensionsKitWebhookV2Uri')]",
+        "path": "[parameters('apiManagementWebhookMetadataPath')]",
+        "protocols": [
+          "https"
+        ],
+        "authenticationSettings": null,
+        "subscriptionKeyParameterNames": null,
+        "isCurrent": true,
+        "apiVersion": "v2",
+        "apiVersionSetId": "[resourceId('Microsoft.ApiManagement/service/apiVersionSets', parameters('apiManagementName'), parameters('apiManagementWebhookVersionSetsName'))]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service', parameters('apiManagementName'))]",
+        "[resourceId('Microsoft.ApiManagement/service/products', parameters('apiManagementName'), parameters('apiManagementProductsUnlimitedName'))]",
+        "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apiManagementName'), concat(parameters('apiManagementWebhookMetadataName'), 'v2'))]",
+        "[resourceId('Microsoft.ApiManagement/service/apiVersionSets', parameters('apiManagementName'), parameters('apiManagementWebhookVersionSetsName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.ApiManagement/service/apis/operations",
+      "name": "[concat(parameters('apiManagementName'), '/', parameters('apiManagementWebhookMetadataName'), '/', parameters('apiManagementOperationsGetSchema'))]",
+      "apiVersion": "2019-12-01",
+      "scale": null,
+      "properties": {
+        "displayName": "[concat('Webhook_', parameters('apiManagementOperationsGetSchema'))]",
+        "method": "GET",
+        "urlTemplate": "/{triggerId}?sig={sig}",
+        "templateParameters": [
+          {
+            "name": "triggerId",
+            "type": "string",
+            "required": true,
+            "values": []
+          },
+          {
+            "name": "sig",
+            "type": "string",
+            "required": true,
+            "values": []
+          }
+        ],
+        "description": null,
+        "responses": [
+          {
+            "statusCode": 200,
+            "description": "OK",
+            "representations": [
+              {
+                "contentType": "application/json",
+                "schemaId": "[parameters('apiManagementWebhookMetadataSchemaName')]",
+                "typeName": "Object"
+              },
+              {
+                "contentType": "text/json",
+                "schemaId": "[parameters('apiManagementWebhookMetadataSchemaName')]",
+                "typeName": "Object"
+              },
+              {
+                "contentType": "application/xml",
+                "schemaId": "[parameters('apiManagementWebhookMetadataSchemaName')]",
+                "typeName": "Object"
+              },
+              {
+                "contentType": "text/xml",
+                "schemaId": "[parameters('apiManagementWebhookMetadataSchemaName')]",
+                "typeName": "Object"
+              }
+            ],
+            "headers": []
+          },
+          {
+            "statusCode": 400,
+            "description": "BadRequest",
+            "representations": [
+              {
+                "contentType": "application/json",
+                "schemaId": "[parameters('apiManagementWebhookMetadataSchemaName')]",
+                "typeName": "ApiV1TriggersHttp-webhook{triggerId}SwaggerGet400ApplicationJsonResponse"
+              },
+              {
+                "contentType": "text/json",
+                "schemaId": "[parameters('apiManagementWebhookMetadataSchemaName')]",
+                "typeName": "ApiV1TriggersHttp-webhook{triggerId}SwaggerGet400TextJsonResponse"
+              },
+              {
+                "contentType": "application/xml",
+                "schemaId": "[parameters('apiManagementWebhookMetadataSchemaName')]",
+                "typeName": "ApiV1TriggersHttp-webhook{triggerId}SwaggerGet400ApplicationXmlResponse"
+              },
+              {
+                "contentType": "text/xml",
+                "schemaId": "[parameters('apiManagementWebhookMetadataSchemaName')]",
+                "typeName": "ApiV1TriggersHttp-webhook{triggerId}SwaggerGet400TextXmlResponse"
+              }
+            ],
+            "headers": []
+          },
+          {
+            "statusCode": 403,
+            "description": "Forbidden",
+            "representations": [
+              {
+                "contentType": "application/json",
+                "schemaId": "[parameters('apiManagementWebhookMetadataSchemaName')]",
+                "typeName": "ApiV1TriggersHttp-webhook{triggerId}SwaggerGet403ApplicationJsonResponse"
+              },
+              {
+                "contentType": "text/json",
+                "schemaId": "[parameters('apiManagementWebhookMetadataSchemaName')]",
+                "typeName": "ApiV1TriggersHttp-webhook{triggerId}SwaggerGet403TextJsonResponse"
+              },
+              {
+                "contentType": "application/xml",
+                "schemaId": "[parameters('apiManagementWebhookMetadataSchemaName')]",
+                "typeName": "ApiV1TriggersHttp-webhook{triggerId}SwaggerGet403ApplicationXmlResponse"
+              },
+              {
+                "contentType": "text/xml",
+                "schemaId": "[parameters('apiManagementWebhookMetadataSchemaName')]",
+                "typeName": "ApiV1TriggersHttp-webhook{triggerId}SwaggerGet403TextXmlResponse"
+              }
+            ],
+            "headers": []
+          },
+          {
+            "statusCode": 404,
+            "description": "NotFound",
+            "representations": [
+              {
+                "contentType": "application/json",
+                "schemaId": "[parameters('apiManagementWebhookMetadataSchemaName')]",
+                "typeName": "ApiV1TriggersHttp-webhook{triggerId}SwaggerGet404ApplicationJsonResponse"
+              },
+              {
+                "contentType": "text/json",
+                "schemaId": "[parameters('apiManagementWebhookMetadataSchemaName')]",
+                "typeName": "ApiV1TriggersHttp-webhook{triggerId}SwaggerGet404TextJsonResponse"
+              },
+              {
+                "contentType": "application/xml",
+                "schemaId": "[parameters('apiManagementWebhookMetadataSchemaName')]",
+                "typeName": "ApiV1TriggersHttp-webhook{triggerId}SwaggerGet404ApplicationXmlResponse"
+              },
+              {
+                "contentType": "text/xml",
+                "schemaId": "[parameters('apiManagementWebhookMetadataSchemaName')]",
+                "typeName": "ApiV1TriggersHttp-webhook{triggerId}SwaggerGet404TextXmlResponse"
+              }
+            ],
+            "headers": []
+          }
+        ],
+        "policies": null
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service', parameters('apiManagementName'))]",
+        "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apiManagementName'), parameters('apiManagementWebhookMetadataName'))]",
+        "[resourceId('Microsoft.ApiManagement/service/apis/schemas', parameters('apiManagementName'), parameters('apiManagementWebhookMetadataName'), parameters('apiManagementWebhookMetadataSchemaName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.ApiManagement/service/apis/policies",
+      "name": "[concat(parameters('apiManagementName'), '/', parameters('apiManagementWebhookMetadataName'), '/', parameters('apiManagementPolicyName'))]",
+      "apiVersion": "2019-12-01",
+      "scale": null,
+      "properties": {
+        "value": "<policies>\r\n  <inbound>\r\n    <cors>\r\n      <allowed-origins>\r\n        <origin>*</origin>\r\n        <!-- allow any -->\r\n      </allowed-origins>\r\n      <allowed-methods>\r\n        <!-- allow any -->\r\n        <method>GET</method>\r\n        <method>POST</method>\r\n        <method>PATCH</method>\r\n        <method>DELETE</method>\r\n      </allowed-methods>\r\n      <allowed-headers>\r\n        <!-- allow any -->\r\n        <header>*</header>\r\n      </allowed-headers>\r\n    </cors>\r\n    <set-backend-service base-url=\"{{ExtensionsKitWebhookUri}}/api/v1/triggers/http-webhook\" />\r\n    <rewrite-uri template=\"{triggerId}/swagger?sig={sig}\" />\r\n    <base />\r\n  </inbound>\r\n  <backend>\r\n    <base />\r\n  </backend>\r\n  <outbound>\r\n    <base />\r\n  </outbound>\r\n  <on-error>\r\n    <base />\r\n  </on-error>\r\n</policies>",
+        "format": "xml"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service', parameters('apiManagementName'))]",
+        "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apiManagementName'), parameters('apiManagementWebhookMetadataName'))]",
+        "[resourceId('Microsoft.ApiManagement/service/namedValues', parameters('apiManagementName'), 'ExtensionsKitWebhookUri')]"
+      ]
+    },
+    {
+      "type": "Microsoft.ApiManagement/service/apis/schemas",
+      "name": "[concat(parameters('apiManagementName'), '/', parameters('apiManagementWebhookMetadataName'), '/', parameters('apiManagementWebhookMetadataSchemaName'))]",
+      "apiVersion": "2019-12-01",
+      "scale": null,
+      "properties": {
+        "contentType": "application/vnd.ms-azure-apim.swagger.definitions+json",
+        "document": {}
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service', parameters('apiManagementName'))]",
+        "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apiManagementName'), parameters('apiManagementWebhookMetadataName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.ApiManagement/service/apis/operations",
+      "name": "[concat(parameters('apiManagementName'), '/', parameters('apiManagementWebhookMetadataName'), 'v2', '/', parameters('apiManagementOperationsGetSchema'))]",
+      "apiVersion": "2019-12-01",
+      "scale": null,
+      "properties": {
+        "displayName": "[concat('Webhook_', parameters('apiManagementOperationsGetSchema'), 'v2')]",
+        "method": "GET",
+        "urlTemplate": "/{triggerId}?sig={sig}",
+        "templateParameters": [
+          {
+            "name": "triggerId",
+            "type": "string",
+            "required": true,
+            "values": []
+          },
+          {
+            "name": "sig",
+            "type": "string",
+            "required": true,
+            "values": []
+          }
+        ],
+        "description": null,
+        "responses": [
+          {
+            "statusCode": 200,
+            "description": "OK",
+            "representations": [
+              {
+                "contentType": "application/json",
+                "schemaId": "[parameters('apiManagementWebhookMetadataSchemaName')]",
+                "typeName": "Object"
+              },
+              {
+                "contentType": "text/json",
+                "schemaId": "[parameters('apiManagementWebhookMetadataSchemaName')]",
+                "typeName": "Object"
+              },
+              {
+                "contentType": "application/xml",
+                "schemaId": "[parameters('apiManagementWebhookMetadataSchemaName')]",
+                "typeName": "Object"
+              },
+              {
+                "contentType": "text/xml",
+                "schemaId": "[parameters('apiManagementWebhookMetadataSchemaName')]",
+                "typeName": "Object"
+              }
+            ],
+            "headers": []
+          },
+          {
+            "statusCode": 400,
+            "description": "BadRequest",
+            "representations": [
+              {
+                "contentType": "application/json",
+                "schemaId": "[parameters('apiManagementWebhookMetadataSchemaName')]",
+                "typeName": "ApiV2TriggersHttp-webhook{triggerId}SwaggerGet400ApplicationJsonResponse"
+              },
+              {
+                "contentType": "text/json",
+                "schemaId": "[parameters('apiManagementWebhookMetadataSchemaName')]",
+                "typeName": "ApiV2TriggersHttp-webhook{triggerId}SwaggerGet400TextJsonResponse"
+              },
+              {
+                "contentType": "application/xml",
+                "schemaId": "[parameters('apiManagementWebhookMetadataSchemaName')]",
+                "typeName": "ApiV2TriggersHttp-webhook{triggerId}SwaggerGet400ApplicationXmlResponse"
+              },
+              {
+                "contentType": "text/xml",
+                "schemaId": "[parameters('apiManagementWebhookMetadataSchemaName')]",
+                "typeName": "ApiV2TriggersHttp-webhook{triggerId}SwaggerGet400TextXmlResponse"
+              }
+            ],
+            "headers": []
+          },
+          {
+            "statusCode": 403,
+            "description": "Forbidden",
+            "representations": [
+              {
+                "contentType": "application/json",
+                "schemaId": "[parameters('apiManagementWebhookMetadataSchemaName')]",
+                "typeName": "ApiV2TriggersHttp-webhook{triggerId}SwaggerGet403ApplicationJsonResponse"
+              },
+              {
+                "contentType": "text/json",
+                "schemaId": "[parameters('apiManagementWebhookMetadataSchemaName')]",
+                "typeName": "ApiV2TriggersHttp-webhook{triggerId}SwaggerGet403TextJsonResponse"
+              },
+              {
+                "contentType": "application/xml",
+                "schemaId": "[parameters('apiManagementWebhookMetadataSchemaName')]",
+                "typeName": "ApiV2TriggersHttp-webhook{triggerId}SwaggerGet403ApplicationXmlResponse"
+              },
+              {
+                "contentType": "text/xml",
+                "schemaId": "[parameters('apiManagementWebhookMetadataSchemaName')]",
+                "typeName": "ApiV2TriggersHttp-webhook{triggerId}SwaggerGet403TextXmlResponse"
+              }
+            ],
+            "headers": []
+          },
+          {
+            "statusCode": 404,
+            "description": "NotFound",
+            "representations": [
+              {
+                "contentType": "application/json",
+                "schemaId": "[parameters('apiManagementWebhookMetadataSchemaName')]",
+                "typeName": "ApiV2TriggersHttp-webhook{triggerId}SwaggerGet404ApplicationJsonResponse"
+              },
+              {
+                "contentType": "text/json",
+                "schemaId": "[parameters('apiManagementWebhookMetadataSchemaName')]",
+                "typeName": "ApiV2TriggersHttp-webhook{triggerId}SwaggerGet404TextJsonResponse"
+              },
+              {
+                "contentType": "application/xml",
+                "schemaId": "[parameters('apiManagementWebhookMetadataSchemaName')]",
+                "typeName": "ApiV2TriggersHttp-webhook{triggerId}SwaggerGet404ApplicationXmlResponse"
+              },
+              {
+                "contentType": "text/xml",
+                "schemaId": "[parameters('apiManagementWebhookMetadataSchemaName')]",
+                "typeName": "ApiV2TriggersHttp-webhook{triggerId}SwaggerGet404TextXmlResponse"
+              }
+            ],
+            "headers": []
+          }
+        ],
+        "policies": null
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service', parameters('apiManagementName'))]",
+        "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apiManagementName'), concat(parameters('apiManagementWebhookMetadataName'), 'v2'))]",
+        "[resourceId('Microsoft.ApiManagement/service/apis/schemas', parameters('apiManagementName'), concat(parameters('apiManagementWebhookMetadataName'), 'v2'), parameters('apiManagementWebhookMetadataSchemaName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.ApiManagement/service/apis/policies",
+      "name": "[concat(parameters('apiManagementName'), '/', parameters('apiManagementWebhookMetadataName'), 'v2', '/', parameters('apiManagementPolicyName'))]",
+      "apiVersion": "2019-12-01",
+      "scale": null,
+      "properties": {
+        "value": "<policies>\r\n  <inbound>\r\n    <cors>\r\n      <allowed-origins>\r\n        <origin>*</origin>\r\n        <!-- allow any -->\r\n      </allowed-origins>\r\n      <allowed-methods>\r\n        <!-- allow any -->\r\n        <method>GET</method>\r\n        <method>POST</method>\r\n        <method>PATCH</method>\r\n        <method>DELETE</method>\r\n      </allowed-methods>\r\n      <allowed-headers>\r\n        <!-- allow any -->\r\n        <header>*</header>\r\n      </allowed-headers>\r\n    </cors>\r\n    <set-backend-service base-url=\"{{ExtensionsKitWebhookV2Uri}}/api/v2/triggers/http-webhook\" />\r\n    <rewrite-uri template=\"{triggerId}/swagger?sig={sig}\" />\r\n    <base />\r\n  </inbound>\r\n  <backend>\r\n    <base />\r\n  </backend>\r\n  <outbound>\r\n    <base />\r\n  </outbound>\r\n  <on-error>\r\n    <base />\r\n  </on-error>\r\n</policies>",
+        "format": "xml"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service', parameters('apiManagementName'))]",
+        "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apiManagementName'), concat(parameters('apiManagementWebhookMetadataName'), 'v2'))]",
+        "[resourceId('Microsoft.ApiManagement/service/namedValues', parameters('apiManagementName'), 'ExtensionsKitWebhookV2Uri')]"
+      ]
+    },
+    {
+      "type": "Microsoft.ApiManagement/service/apis/schemas",
+      "name": "[concat(parameters('apiManagementName'), '/', parameters('apiManagementWebhookMetadataName'), 'v2', '/', parameters('apiManagementWebhookMetadataSchemaName'))]",
+      "apiVersion": "2019-12-01",
+      "scale": null,
+      "properties": {
+        "contentType": "application/vnd.ms-azure-apim.swagger.definitions+json",
+        "document": {}
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service', parameters('apiManagementName'))]",
+        "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apiManagementName'), concat(parameters('apiManagementWebhookMetadataName'), 'v2'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.ApiManagement/service/apis/operations",
+      "name": "[concat(parameters('apiManagementName'), '/', parameters('apiManagementWebhookName'), '/', parameters('apiManagementOperationsPostMessage'))]",
+      "apiVersion": "2019-12-01",
+      "scale": null,
+      "properties": {
+        "displayName": "[concat('Webhook_', parameters('apiManagementOperationsPostMessage'))]",
+        "method": "POST",
+        "urlTemplate": "/{triggerId}?sig={sig}",
+        "templateParameters": [
+          {
+            "name": "triggerId",
+            "type": "string",
+            "required": true,
+            "values": []
+          },
+          {
+            "name": "sig",
+            "type": "string",
+            "required": true,
+            "values": []
+          }
+        ],
+        "description": null,
+        "request": {
+          "queryParameters": [],
+          "headers": [],
+          "representations": [
+            {
+              "contentType": "application/json",
+              "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+              "typeName": "Object"
+            },
+            {
+              "contentType": "text/json",
+              "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+              "typeName": "Object"
+            },
+            {
+              "contentType": "application/x-www-form-urlencoded"
+            }
+          ]
+        },
+        "responses": [
+          {
+            "statusCode": 204,
+            "description": "NoContent",
+            "representations": [
+              {
+                "contentType": "application/json",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "Object"
+              },
+              {
+                "contentType": "text/json",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "Object"
+              },
+              {
+                "contentType": "application/xml",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "Object"
+              },
+              {
+                "contentType": "text/xml",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "Object"
+              }
+            ],
+            "headers": []
+          },
+          {
+            "statusCode": 400,
+            "description": "BadRequest",
+            "representations": [
+              {
+                "contentType": "application/json",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "ApiV1TriggersHttp-webhook{triggerId}Post400ApplicationJsonResponse"
+              },
+              {
+                "contentType": "text/json",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "ApiV1TriggersHttp-webhook{triggerId}Post400TextJsonResponse"
+              },
+              {
+                "contentType": "application/xml",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "ApiV1TriggersHttp-webhook{triggerId}Post400ApplicationXmlResponse"
+              },
+              {
+                "contentType": "text/xml",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "ApiV1TriggersHttp-webhook{triggerId}Post400TextXmlResponse"
+              }
+            ],
+            "headers": []
+          },
+          {
+            "statusCode": 403,
+            "description": "Forbidden",
+            "representations": [
+              {
+                "contentType": "application/json",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "ApiV1TriggersHttp-webhook{triggerId}Post403ApplicationJsonResponse"
+              },
+              {
+                "contentType": "text/json",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "ApiV1TriggersHttp-webhook{triggerId}Post403TextJsonResponse"
+              },
+              {
+                "contentType": "application/xml",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "ApiV1TriggersHttp-webhook{triggerId}Post403ApplicationXmlResponse"
+              },
+              {
+                "contentType": "text/xml",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "ApiV1TriggersHttp-webhook{triggerId}Post403TextXmlResponse"
+              }
+            ],
+            "headers": []
+          },
+          {
+            "statusCode": 404,
+            "description": "NotFound",
+            "representations": [
+              {
+                "contentType": "application/json",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "ApiV1TriggersHttp-webhook{triggerId}Post404ApplicationJsonResponse"
+              },
+              {
+                "contentType": "text/json",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "ApiV1TriggersHttp-webhook{triggerId}Post404TextJsonResponse"
+              },
+              {
+                "contentType": "application/xml",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "ApiV1TriggersHttp-webhook{triggerId}Post404ApplicationXmlResponse"
+              },
+              {
+                "contentType": "text/xml",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "ApiV1TriggersHttp-webhook{triggerId}Post404TextXmlResponse"
+              }
+            ],
+            "headers": []
+          }
+        ],
+        "policies": null
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service', parameters('apiManagementName'))]",
+        "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apiManagementName'), parameters('apiManagementWebhookName'))]",
+        "[resourceId('Microsoft.ApiManagement/service/apis/schemas', parameters('apiManagementName'), parameters('apiManagementWebhookName'), parameters('apiManagementWebhookSchemaName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.ApiManagement/service/apis/policies",
+      "name": "[concat(parameters('apiManagementName'), '/', parameters('apiManagementWebhookName'), '/', parameters('apiManagementPolicyName'))]",
+      "apiVersion": "2019-12-01",
+      "scale": null,
+      "properties": {
+        "value": "<policies>\r\n  <inbound>\r\n    <base />\r\n    <set-backend-service base-url=\"{{ExtensionsKitWebhookUri}}/api/v1/triggers/http-webhook\" />\r\n    <!--- Get IDS Token -->\r\n    <send-request ignore-error=\"true\" timeout=\"{{ExtensionsKitApiTimeout}}\" response-variable-name=\"idsResponse\" mode=\"new\">\r\n      <set-url>{{IdentityServicesUri}}/connect/token</set-url>\r\n      <set-method>POST</set-method>\r\n      <set-header name=\"Content-Type\" exists-action=\"override\">\r\n        <value>application/x-www-form-urlencoded</value>\r\n      </set-header>\r\n      <set-body>@{\r\n                        return \"client_id={{InternalClientId}}&amp;scope=u4ek-public-api&amp;client_secret={{InternalClientSecret}}&amp;grant_type=client_credentials\";\r\n                    }</set-body>\r\n    </send-request>\r\n    <!--  Handle Errors, Timeouts while getting access token-->\r\n    <choose>\r\n      <!--  in case of timeouts, the value of idsResponse is null -->\r\n      <when condition=\"@(((IResponse)context.Variables[&quot;idsResponse&quot;]) == null)\">\r\n        <return-response>\r\n          <set-status code=\"429\" reason=\"Too many request\" />\r\n          <set-header name=\"Retry-After\" exists-action=\"override\">\r\n            <value>30</value>\r\n          </set-header>\r\n        </return-response>\r\n      </when>\r\n      <!--  Forward errors while getting access token -->\r\n      <when condition=\"@(((IResponse)context.Variables[&quot;idsResponse&quot;]).StatusCode != 200)\">\r\n        <return-response response-variable-name=\"idsResponse\" />\r\n      </when>\r\n    </choose>\r\n    <set-variable name=\"idsResponseObject\" value=\"@( ((IResponse)context.Variables[&quot;idsResponse&quot;]).Body.As&lt;JObject&gt;())\" />\r\n    <set-variable name=\"idsAccessToken\" value=\"@( ((JObject)context.Variables[&quot;idsResponseObject&quot;])[&quot;access_token&quot;].ToString())\" />\r\n    <set-variable name=\"idsTokenExpiresIn\" value=\"@( ((JObject)context.Variables[&quot;idsResponseObject&quot;])[&quot;expires_in&quot;]?.ToString() ?? &quot;3600&quot;)\" />\r\n    <!-- Get TriggerDefinition from ExtensionsKit API -->\r\n    <send-request ignore-error=\"true\" timeout=\"{{ExtensionsKitApiTimeout}}\" response-variable-name=\"triggerResponse\" mode=\"new\">\r\n      <set-url>@(\"{{ExtensionsKitUri}}/api/v2/triggers/\"+ context.Request.MatchedParameters[\"triggerId\"])</set-url>\r\n      <set-method>GET</set-method>\r\n      <set-header name=\"Authorization\" exists-action=\"override\">\r\n        <value>@(\"Bearer \" + (string)context.Variables[\"idsAccessToken\"])</value>\r\n      </set-header>\r\n    </send-request>\r\n    <!--  Handle Errors, Timeouts while reading Trigger -->\r\n    <choose>\r\n      <!--  in case of timeouts, the value of triggerResponse is null -->\r\n      <when condition=\"@(((IResponse)context.Variables[&quot;triggerResponse&quot;]) == null)\">\r\n        <return-response response-variable-name=\"triggerResponse\">\r\n          <set-status code=\"429\" reason=\"Too many request\" />\r\n          <set-header name=\"Retry-After\" exists-action=\"override\">\r\n            <value>30</value>\r\n          </set-header>\r\n        </return-response>\r\n      </when>\r\n      <!--  Forward errors while getting trigger -->\r\n      <when condition=\"@(((IResponse)context.Variables[&quot;triggerResponse&quot;]).StatusCode != 200)\">\r\n        <return-response response-variable-name=\"triggerResponse\" />\r\n      </when>\r\n      <otherwise />\r\n    </choose>\r\n    <set-variable name=\"triggerResponseObject\" value=\"@( ((IResponse)context.Variables[&quot;triggerResponse&quot;]).Body.As&lt;JObject&gt;())\" />\r\n    <set-variable name=\"triggerConfigObject\" value=\"@( ((JObject)context.Variables[&quot;triggerResponseObject&quot;])[&quot;Config&quot;] )\" />\r\n    <set-variable name=\"triggerConfig-AuthenticationType\" value=\"@( ((JObject)context.Variables[&quot;triggerConfigObject&quot;])[&quot;AuthenticationType&quot;]?.ToString() ?? &quot;&quot; )\" />\r\n    <choose>\r\n      <when condition=\"@(((string)context.Variables[&quot;triggerConfig-AuthenticationType&quot;]).Equals(&quot;Basic&quot;, StringComparison.InvariantCultureIgnoreCase))\">\r\n        <!--  Flow requests  Basic  Authorization -->\r\n        <set-variable name=\"triggerConfig-Authentication-user\" value=\"@( ((JObject)context.Variables[&quot;triggerConfigObject&quot;])[&quot;UserName&quot;]?.ToString() ?? &quot;&quot; )\" />\r\n        <set-variable name=\"triggerConfig-Authentication-password\" value=\"@( ((JObject)context.Variables[&quot;triggerConfigObject&quot;])[&quot;Password&quot;]?.ToString() ?? &quot;&quot; )\" />\r\n        <set-variable name=\"triggerConfig-Authentication-issuer\" value=\"@( ((JObject)context.Variables[&quot;triggerConfigObject&quot;])[&quot;Issuer&quot;]?.ToString() ?? &quot;&quot; )\" />\r\n        <set-variable name=\"triggerConfig-Authentication-basic\" value=\"@(&quot;Basic &quot; + Convert.ToBase64String(Encoding.ASCII.GetBytes(context.Variables[&quot;triggerConfig-Authentication-user&quot;] + &quot;:&quot; + context.Variables[&quot;triggerConfig-Authentication-password&quot;])) )\" />\r\n        <!--  Calculate authorization header value -->\r\n        <check-header name=\"Authorization\" failed-check-httpcode=\"401\" failed-check-error-message=\"Not authorized\" ignore-case=\"false\">\r\n          <value>@((string)context.Variables[\"triggerConfig-Authentication-basic\"])</value>\r\n        </check-header>\r\n      </when>\r\n      <when condition=\"@(((string)context.Variables[&quot;triggerConfig-AuthenticationType&quot;]).Equals(&quot;U4IDS&quot;, StringComparison.InvariantCultureIgnoreCase))\">\r\n        <validate-jwt header-name=\"Authorization\">\r\n          <openid-config url=\"{{IdentityServicesUri}}/.well-known/openid-configuration\" />\r\n        </validate-jwt>\r\n        <set-variable name=\"jwtToken\" value=\"@( context.Request.Headers[&quot;Authorization&quot;]?.First()?.Substring(&quot;Bearer &quot;.Length)?.AsJwt() )\" />\r\n      </when>\r\n      <when condition=\"@(((string)context.Variables[&quot;triggerConfig-AuthenticationType&quot;]).Equals(&quot;AAD&quot;, StringComparison.InvariantCultureIgnoreCase))\">\r\n        <trace source=\"Trace\">\"AAD {{AADIdentityUri}}\"</trace>\r\n        <validate-jwt header-name=\"Authorization\">\r\n          <openid-config url=\"{{AADIdentityUri}}/.well-known/openid-configuration\" />\r\n        </validate-jwt>\r\n        <set-variable name=\"jwtToken\" value=\"@( context.Request.Headers[&quot;Authorization&quot;]?.First()?.Substring(&quot;Bearer &quot;.Length)?.AsJwt() )\" />\r\n      </when>\r\n    </choose>\r\n    <choose>\r\n      <when condition=\"@(context.Variables.ContainsKey(&quot;jwtToken&quot;))\">\r\n        <set-variable name=\"claimsFound\" value=\"@{                                 &#xA;                    Jwt jwtToken = ((Jwt)context.Variables[&quot;jwtToken&quot;]);&#xA;                    JObject triggerConfigObject = (JObject)context.Variables[&quot;triggerConfigObject&quot;];&#xA;                    if (triggerConfigObject[&quot;ClaimRules&quot;] != null &amp;&amp; triggerConfigObject[&quot;ClaimRules&quot;].Type == JTokenType.Object) {   &#xA;                        foreach(var rule in ((JObject)triggerConfigObject[&quot;ClaimRules&quot;]).Properties()) &#xA;                        {                        &#xA;                            var value = rule.Last()?.ToString();&#xA;                            string[] claims;&#xA;                            if (!jwtToken.Claims.TryGetValue(rule.Name, out claims)) {&#xA;                                return false;    &#xA;                            }&#xA;                            &#xA;                            switch (value)&#xA;                            {&#xA;                                case &quot;{{Template-Tenant}}&quot;:&#xA;                                    value = triggerConfigObject[&quot;TenantId&quot;].ToString();&#xA;                                    break;&#xA;                                case &quot;{{Template-TriggerId}}&quot;:&#xA;                                    value = triggerConfigObject[&quot;TriggerId&quot;].ToString();&#xA;                                    break;&#xA;                            }&#xA;                            if (!claims.Contains(value)) {&#xA;                                return false;&#xA;                            }&#xA;                        }&#xA;                    }&#xA;                    return true;&#xA;                }\" />\r\n        <choose>\r\n          <when condition=\"@( ((bool)context.Variables[&quot;claimsFound&quot;]) != true)\">\r\n            <return-response>\r\n              <set-status code=\"401\" reason=\"Requested claims not present\" />\r\n            </return-response>\r\n          </when>\r\n        </choose>\r\n      </when>\r\n    </choose>\r\n    <!--  Don't expose APIM subscription key to the backend. -->\r\n    <set-header name=\"Ocp-Apim-Subscription-Key\" exists-action=\"delete\" />\r\n  </inbound>\r\n  <backend>\r\n    <base />\r\n  </backend>\r\n  <outbound>\r\n    <base />\r\n  </outbound>\r\n  <on-error>\r\n    <base />\r\n  </on-error>\r\n</policies>",
+        "format": "xml"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service', parameters('apiManagementName'))]",
+        "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apiManagementName'), parameters('apiManagementWebhookName'))]",
+        "[resourceId('Microsoft.ApiManagement/service/namedValues', parameters('apiManagementName'), 'IdentityServicesUri')]",
+        "[resourceId('Microsoft.ApiManagement/service/namedValues', parameters('apiManagementName'), 'ExtensionsKitWebhookUri')]"
+
+      ]
+    },
+    {
+      "type": "Microsoft.ApiManagement/service/apis/schemas",
+      "name": "[concat(parameters('apiManagementName'), '/', parameters('apiManagementWebhookName'), '/', parameters('apiManagementWebhookSchemaName'))]",
+      "apiVersion": "2019-12-01",
+      "scale": null,
+      "properties": {
+        "contentType": "application/vnd.ms-azure-apim.swagger.definitions+json",
+        "document": {}
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service', parameters('apiManagementName'))]",
+        "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apiManagementName'), parameters('apiManagementWebhookName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.ApiManagement/service/apis/operations",
+      "name": "[concat(parameters('apiManagementName'), '/', parameters('apiManagementWebhookName'), 'v2', '/', parameters('apiManagementOperationsOptionsMessage'))]",
+      "apiVersion": "2019-12-01",
+      "scale": null,
+      "properties": {
+        "displayName": "[concat('Webhook_', parameters('apiManagementOperationsOptionsMessage'))]",
+        "method": "OPTIONS",
+        "urlTemplate": "/{triggerId}?sig={sig}",
+        "templateParameters": [
+          {
+            "name": "triggerId",
+            "type": "string",
+            "required": true,
+            "values": []
+          },
+          {
+            "name": "sig",
+            "type": "string",
+            "required": true,
+            "values": []
+          }
+        ],
+        "description": null,
+        "request": {
+          "queryParameters": [],
+          "headers": [],
+          "representations": [
+            {
+              "contentType": "application/json",
+              "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+              "typeName": "Object"
+            },
+            {
+              "contentType": "text/json",
+              "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+              "typeName": "Object"
+            },
+            {
+              "contentType": "application/x-www-form-urlencoded"
+            }
+          ]
+        },
+        "responses": [
+          {
+            "statusCode": 204,
+            "description": "NoContent",
+            "representations": [
+              {
+                "contentType": "application/json",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "Object"
+              },
+              {
+                "contentType": "text/json",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "Object"
+              },
+              {
+                "contentType": "application/xml",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "Object"
+              },
+              {
+                "contentType": "text/xml",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "Object"
+              }
+            ],
+            "headers": []
+          },
+          {
+            "statusCode": 400,
+            "description": "BadRequest",
+            "representations": [
+              {
+                "contentType": "application/json",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "ApiV2TriggersHttp-webhook{triggerId}Options400ApplicationJsonResponse"
+              },
+              {
+                "contentType": "text/json",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "ApiV2TriggersHttp-webhook{triggerId}Options400TextJsonResponse"
+              },
+              {
+                "contentType": "application/xml",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "ApiV2TriggersHttp-webhook{triggerId}Options400ApplicationXmlResponse"
+              },
+              {
+                "contentType": "text/xml",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "ApiV2TriggersHttp-webhook{triggerId}Options400TextXmlResponse"
+              }
+            ],
+            "headers": []
+          },
+          {
+            "statusCode": 403,
+            "description": "Forbidden",
+            "representations": [
+              {
+                "contentType": "application/json",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "ApiV2TriggersHttp-webhook{triggerId}Options403ApplicationJsonResponse"
+              },
+              {
+                "contentType": "text/json",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "ApiV2TriggersHttp-webhook{triggerId}Options403TextJsonResponse"
+              },
+              {
+                "contentType": "application/xml",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "ApiV2TriggersHttp-webhook{triggerId}Options403ApplicationXmlResponse"
+              },
+              {
+                "contentType": "text/xml",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "ApiV2TriggersHttp-webhook{triggerId}Options403TextXmlResponse"
+              }
+            ],
+            "headers": []
+          },
+          {
+            "statusCode": 404,
+            "description": "NotFound",
+            "representations": [
+              {
+                "contentType": "application/json",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "ApiV2TriggersHttp-webhook{triggerId}Options404ApplicationJsonResponse"
+              },
+              {
+                "contentType": "text/json",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "ApiV2TriggersHttp-webhook{triggerId}Options404TextJsonResponse"
+              },
+              {
+                "contentType": "application/xml",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "ApiV2TriggersHttp-webhook{triggerId}Options404ApplicationXmlResponse"
+              },
+              {
+                "contentType": "text/xml",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "ApiV2TriggersHttp-webhook{triggerId}Options404TextXmlResponse"
+              }
+            ],
+            "headers": []
+          }
+        ],
+        "policies": null
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service', parameters('apiManagementName'))]",
+        "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apiManagementName'), concat(parameters('apiManagementWebhookName'), 'v2'))]",
+        "[resourceId('Microsoft.ApiManagement/service/apis/schemas', parameters('apiManagementName'), concat(parameters('apiManagementWebhookName'), 'v2'), parameters('apiManagementWebhookSchemaName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.ApiManagement/service/apis/operations",
+      "name": "[concat(parameters('apiManagementName'), '/', parameters('apiManagementWebhookName'), 'v2', '/', parameters('apiManagementOperationsGetMessage'))]",
+      "apiVersion": "2019-12-01",
+      "scale": null,
+      "properties": {
+        "displayName": "[concat('Webhook_', parameters('apiManagementOperationsGetMessage'))]",
+        "method": "GET",
+        "urlTemplate": "/{triggerId}?sig={sig}",
+        "templateParameters": [
+          {
+            "name": "triggerId",
+            "type": "string",
+            "required": true,
+            "values": []
+          },
+          {
+            "name": "sig",
+            "type": "string",
+            "required": true,
+            "values": []
+          }
+        ],
+        "description": null,
+        "request": {
+          "queryParameters": [],
+          "headers": [],
+          "representations": [
+            {
+              "contentType": "application/json",
+              "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+              "typeName": "Object"
+            },
+            {
+              "contentType": "text/json",
+              "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+              "typeName": "Object"
+            },
+            {
+              "contentType": "application/x-www-form-urlencoded"
+            }
+          ]
+        },
+        "responses": [
+          {
+            "statusCode": 204,
+            "description": "NoContent",
+            "representations": [
+              {
+                "contentType": "application/json",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "Object"
+              },
+              {
+                "contentType": "text/json",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "Object"
+              },
+              {
+                "contentType": "application/xml",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "Object"
+              },
+              {
+                "contentType": "text/xml",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "Object"
+              }
+            ],
+            "headers": []
+          },
+          {
+            "statusCode": 400,
+            "description": "BadRequest",
+            "representations": [
+              {
+                "contentType": "application/json",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "ApiV2TriggersHttp-webhook{triggerId}Get400ApplicationJsonResponse"
+              },
+              {
+                "contentType": "text/json",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "ApiV2TriggersHttp-webhook{triggerId}Get400TextJsonResponse"
+              },
+              {
+                "contentType": "application/xml",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "ApiV2TriggersHttp-webhook{triggerId}Get400ApplicationXmlResponse"
+              },
+              {
+                "contentType": "text/xml",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "ApiV2TriggersHttp-webhook{triggerId}Get400TextXmlResponse"
+              }
+            ],
+            "headers": []
+          },
+          {
+            "statusCode": 403,
+            "description": "Forbidden",
+            "representations": [
+              {
+                "contentType": "application/json",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "ApiV2TriggersHttp-webhook{triggerId}Get403ApplicationJsonResponse"
+              },
+              {
+                "contentType": "text/json",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "ApiV2TriggersHttp-webhook{triggerId}Get403TextJsonResponse"
+              },
+              {
+                "contentType": "application/xml",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "ApiV2TriggersHttp-webhook{triggerId}Get403ApplicationXmlResponse"
+              },
+              {
+                "contentType": "text/xml",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "ApiV2TriggersHttp-webhook{triggerId}Get403TextXmlResponse"
+              }
+            ],
+            "headers": []
+          },
+          {
+            "statusCode": 404,
+            "description": "NotFound",
+            "representations": [
+              {
+                "contentType": "application/json",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "ApiV2TriggersHttp-webhook{triggerId}Get404ApplicationJsonResponse"
+              },
+              {
+                "contentType": "text/json",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "ApiV2TriggersHttp-webhook{triggerId}Get404TextJsonResponse"
+              },
+              {
+                "contentType": "application/xml",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "ApiV2TriggersHttp-webhook{triggerId}Get404ApplicationXmlResponse"
+              },
+              {
+                "contentType": "text/xml",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "ApiV2TriggersHttp-webhook{triggerId}Get404TextXmlResponse"
+              }
+            ],
+            "headers": []
+          }
+        ],
+        "policies": null
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service', parameters('apiManagementName'))]",
+        "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apiManagementName'), concat(parameters('apiManagementWebhookName'), 'v2'))]",
+        "[resourceId('Microsoft.ApiManagement/service/apis/schemas', parameters('apiManagementName'), concat(parameters('apiManagementWebhookName'), 'v2'), parameters('apiManagementWebhookSchemaName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.ApiManagement/service/apis/operations",
+      "name": "[concat(parameters('apiManagementName'), '/', parameters('apiManagementWebhookName'), 'v2', '/', parameters('apiManagementOperationsPutMessage'))]",
+      "apiVersion": "2019-12-01",
+      "scale": null,
+      "properties": {
+        "displayName": "[concat('Webhook_', parameters('apiManagementOperationsPutMessage'))]",
+        "method": "PUT",
+        "urlTemplate": "/{triggerId}?sig={sig}",
+        "templateParameters": [
+          {
+            "name": "triggerId",
+            "type": "string",
+            "required": true,
+            "values": []
+          },
+          {
+            "name": "sig",
+            "type": "string",
+            "required": true,
+            "values": []
+          }
+        ],
+        "description": null,
+        "request": {
+          "queryParameters": [],
+          "headers": [],
+          "representations": [
+            {
+              "contentType": "application/json",
+              "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+              "typeName": "Object"
+            },
+            {
+              "contentType": "text/json",
+              "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+              "typeName": "Object"
+            },
+            {
+              "contentType": "application/x-www-form-urlencoded"
+            }
+          ]
+        },
+        "responses": [
+          {
+            "statusCode": 204,
+            "description": "NoContent",
+            "representations": [
+              {
+                "contentType": "application/json",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "Object"
+              },
+              {
+                "contentType": "text/json",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "Object"
+              },
+              {
+                "contentType": "application/xml",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "Object"
+              },
+              {
+                "contentType": "text/xml",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "Object"
+              }
+            ],
+            "headers": []
+          },
+          {
+            "statusCode": 400,
+            "description": "BadRequest",
+            "representations": [
+              {
+                "contentType": "application/json",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "ApiV2TriggersHttp-webhook{triggerId}Put400ApplicationJsonResponse"
+              },
+              {
+                "contentType": "text/json",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "ApiV2TriggersHttp-webhook{triggerId}Put400TextJsonResponse"
+              },
+              {
+                "contentType": "application/xml",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "ApiV2TriggersHttp-webhook{triggerId}Put400ApplicationXmlResponse"
+              },
+              {
+                "contentType": "text/xml",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "ApiV2TriggersHttp-webhook{triggerId}Put400TextXmlResponse"
+              }
+            ],
+            "headers": []
+          },
+          {
+            "statusCode": 403,
+            "description": "Forbidden",
+            "representations": [
+              {
+                "contentType": "application/json",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "ApiV2TriggersHttp-webhook{triggerId}Put403ApplicationJsonResponse"
+              },
+              {
+                "contentType": "text/json",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "ApiV2TriggersHttp-webhook{triggerId}Put403TextJsonResponse"
+              },
+              {
+                "contentType": "application/xml",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "ApiV2TriggersHttp-webhook{triggerId}Put403ApplicationXmlResponse"
+              },
+              {
+                "contentType": "text/xml",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "ApiV2TriggersHttp-webhook{triggerId}Put403TextXmlResponse"
+              }
+            ],
+            "headers": []
+          },
+          {
+            "statusCode": 404,
+            "description": "NotFound",
+            "representations": [
+              {
+                "contentType": "application/json",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "ApiV2TriggersHttp-webhook{triggerId}Put404ApplicationJsonResponse"
+              },
+              {
+                "contentType": "text/json",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "ApiV2TriggersHttp-webhook{triggerId}Put404TextJsonResponse"
+              },
+              {
+                "contentType": "application/xml",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "ApiV2TriggersHttp-webhook{triggerId}Put404ApplicationXmlResponse"
+              },
+              {
+                "contentType": "text/xml",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "ApiV2TriggersHttp-webhook{triggerId}Put404TextXmlResponse"
+              }
+            ],
+            "headers": []
+          }
+        ],
+        "policies": null
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service', parameters('apiManagementName'))]",
+        "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apiManagementName'), concat(parameters('apiManagementWebhookName'), 'v2'))]",
+        "[resourceId('Microsoft.ApiManagement/service/apis/schemas', parameters('apiManagementName'), concat(parameters('apiManagementWebhookName'), 'v2'), parameters('apiManagementWebhookSchemaName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.ApiManagement/service/apis/operations",
+      "name": "[concat(parameters('apiManagementName'), '/', parameters('apiManagementWebhookName'), 'v2', '/', parameters('apiManagementOperationsPostMessage'))]",
+      "apiVersion": "2019-12-01",
+      "scale": null,
+      "properties": {
+        "displayName": "[concat('Webhook_', parameters('apiManagementOperationsPostMessage'))]",
+        "method": "POST",
+        "urlTemplate": "/{triggerId}?sig={sig}",
+        "templateParameters": [
+          {
+            "name": "triggerId",
+            "type": "string",
+            "required": true,
+            "values": []
+          },
+          {
+            "name": "sig",
+            "type": "string",
+            "required": true,
+            "values": []
+          }
+        ],
+        "description": null,
+        "request": {
+          "queryParameters": [],
+          "headers": [],
+          "representations": [
+            {
+              "contentType": "application/json",
+              "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+              "typeName": "Object"
+            },
+            {
+              "contentType": "text/json",
+              "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+              "typeName": "Object"
+            },
+            {
+              "contentType": "application/x-www-form-urlencoded"
+            }
+          ]
+        },
+        "responses": [
+          {
+            "statusCode": 204,
+            "description": "NoContent",
+            "representations": [
+              {
+                "contentType": "application/json",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "Object"
+              },
+              {
+                "contentType": "text/json",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "Object"
+              },
+              {
+                "contentType": "application/xml",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "Object"
+              },
+              {
+                "contentType": "text/xml",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "Object"
+              }
+            ],
+            "headers": []
+          },
+          {
+            "statusCode": 400,
+            "description": "BadRequest",
+            "representations": [
+              {
+                "contentType": "application/json",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "ApiV2TriggersHttp-webhook{triggerId}Post400ApplicationJsonResponse"
+              },
+              {
+                "contentType": "text/json",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "ApiV2TriggersHttp-webhook{triggerId}Post400TextJsonResponse"
+              },
+              {
+                "contentType": "application/xml",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "ApiV2TriggersHttp-webhook{triggerId}Post400ApplicationXmlResponse"
+              },
+              {
+                "contentType": "text/xml",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "ApiV2TriggersHttp-webhook{triggerId}Post400TextXmlResponse"
+              }
+            ],
+            "headers": []
+          },
+          {
+            "statusCode": 403,
+            "description": "Forbidden",
+            "representations": [
+              {
+                "contentType": "application/json",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "ApiV2TriggersHttp-webhook{triggerId}Post403ApplicationJsonResponse"
+              },
+              {
+                "contentType": "text/json",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "ApiV2TriggersHttp-webhook{triggerId}Post403TextJsonResponse"
+              },
+              {
+                "contentType": "application/xml",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "ApiV2TriggersHttp-webhook{triggerId}Post403ApplicationXmlResponse"
+              },
+              {
+                "contentType": "text/xml",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "ApiV2TriggersHttp-webhook{triggerId}Post403TextXmlResponse"
+              }
+            ],
+            "headers": []
+          },
+          {
+            "statusCode": 404,
+            "description": "NotFound",
+            "representations": [
+              {
+                "contentType": "application/json",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "ApiV2TriggersHttp-webhook{triggerId}Post404ApplicationJsonResponse"
+              },
+              {
+                "contentType": "text/json",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "ApiV2TriggersHttp-webhook{triggerId}Post404TextJsonResponse"
+              },
+              {
+                "contentType": "application/xml",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "ApiV2TriggersHttp-webhook{triggerId}Post404ApplicationXmlResponse"
+              },
+              {
+                "contentType": "text/xml",
+                "schemaId": "[parameters('apiManagementWebhookSchemaName')]",
+                "typeName": "ApiV2TriggersHttp-webhook{triggerId}Post404TextXmlResponse"
+              }
+            ],
+            "headers": []
+          }
+        ],
+        "policies": null
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service', parameters('apiManagementName'))]",
+        "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apiManagementName'), concat(parameters('apiManagementWebhookName'), 'v2'))]",
+        "[resourceId('Microsoft.ApiManagement/service/apis/schemas', parameters('apiManagementName'), concat(parameters('apiManagementWebhookName'), 'v2'), parameters('apiManagementWebhookSchemaName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.ApiManagement/service/apis/policies",
+      "name": "[concat(parameters('apiManagementName'), '/', parameters('apiManagementWebhookName'), 'v2', '/', parameters('apiManagementPolicyName'))]",
+      "apiVersion": "2019-12-01",
+      "scale": null,
+      "properties": {
+        "value": "[variables('policies')]",
+        "format": "xml"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service', parameters('apiManagementName'))]",
+        "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apiManagementName'), parameters('apiManagementWebhookName'))]",
+        "[resourceId('Microsoft.ApiManagement/service/namedValues', parameters('apiManagementName'), 'IdentityServicesUri')]",
+        "[resourceId('Microsoft.ApiManagement/service/namedValues', parameters('apiManagementName'), 'ExtensionsKitWebhookV2Uri')]"
+
+      ]
+    },
+    {
+      "type": "Microsoft.ApiManagement/service/apis/schemas",
+      "name": "[concat(parameters('apiManagementName'), '/', parameters('apiManagementWebhookName'), 'v2', '/', parameters('apiManagementWebhookSchemaName'))]",
+      "apiVersion": "2019-12-01",
+      "scale": null,
+      "properties": {
+        "contentType": "application/vnd.ms-azure-apim.swagger.definitions+json",
+        "document": {}
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service', parameters('apiManagementName'))]",
+        "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apiManagementName'), parameters('apiManagementWebhookName'))]"
+      ]
+    }
+  ],
+
+  "outputs": {}
+}

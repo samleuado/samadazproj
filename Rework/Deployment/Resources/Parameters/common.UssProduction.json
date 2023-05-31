@@ -1,0 +1,9 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+      "actionGroupMails": {
+        "value": ["oleg.ryabtsev@unit4.com","ayodele.samuel.adomeh@unit4.com"]
+      }
+    }
+  }

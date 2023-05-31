@@ -1,0 +1,133 @@
+parameters:
+  ServiceConnection: ''
+  MessageHubTriggerAppServiceName: ''
+  SchedulerTriggerAppServiceName: ''
+  WebhookTriggerAppServiceName: ''
+  Dependency: ''
+
+jobs:
+- job: DeployMHTrigger
+  displayName: 'Deploy MH Trigger'
+  ${{ if ne(parameters.Dependency, '')}}:
+    dependsOn: ${{ parameters.Dependency }} 
+  ${{ if ne(parameters.Dependency, '')}}:
+    condition: succeeded('${{ parameters.Dependency }}')  
+
+  pool: 
+    vmImage: 'ubuntu-latest'
+    
+  variables:
+  - template: DeploymentResources/Resources/Variables/vars.mh-events.yml@EKExtensions
+    parameters:
+      AppServiceName: "${{ parameters.MessageHubTriggerAppServiceName }}"
+
+  steps:
+    - task: DownloadPipelineArtifact@2
+      displayName: 'Download resources files'
+      inputs:
+        source: 'current'
+        artifact: 'mh-trigger-resources'
+        path: '$(Pipeline.Workspace)/resources'
+
+    - task: DownloadPipelineArtifact@2
+      displayName: 'Download services files'
+      inputs:
+        source: 'current'
+        artifact: 'mh-trigger-service'
+        path: '$(Pipeline.Workspace)/service'
+    
+    - checkout: EKExtensions
+      path: 'ExtensionKit.Extensions/mh-trigger'
+
+    - template: DeploymentResources/Jobs/deploy.component.yml@EKExtensions
+      parameters: 
+        ServiceConnection: ${{ parameters.ServiceConnection }}
+        AppServiceName: ${{ parameters.MessageHubTriggerAppServiceName }}
+        ResourceGroupName: $(resourceGroupName)
+        ResourceGroupLocation: $(location)
+        ResourceFile: '$(Pipeline.Workspace)/resources/mh-trigger-template.json'
+        Package: '$(Pipeline.Workspace)/service/U4.ExtensionKit.Triggers.MessageHub.zip'
+
+- job: DeploySchedulerTrigger
+  displayName: 'Deploy Scheduler Trigger'
+  ${{ if ne(parameters.Dependency, '')}}:
+    dependsOn: ${{ parameters.Dependency }} 
+  ${{ if ne(parameters.Dependency, '')}}:
+    condition: succeeded('${{ parameters.Dependency }}')  
+
+  pool: 
+    vmImage: 'ubuntu-latest'
+    
+  variables:
+  - template: DeploymentResources/Resources/Variables/vars.scheduler.yml@EKExtensions
+    parameters:
+      AppServiceName: "${{ parameters.SchedulerTriggerAppServiceName }}"
+
+  steps:
+    - task: DownloadPipelineArtifact@2
+      displayName: 'Download resources files'
+      inputs:
+        source: 'current'
+        artifact: 'scheduler-trigger-resources'
+        path: '$(Pipeline.Workspace)/resources'
+
+    - task: DownloadPipelineArtifact@2
+      displayName: 'Download services files'
+      inputs:
+        source: 'current'
+        artifact: 'scheduler-trigger-service'
+        path: '$(Pipeline.Workspace)/service'
+
+    - checkout: EKExtensions
+      path: 'ExtensionKit.Extensions/scheduler-trigger'
+
+    - template: DeploymentResources/Jobs/deploy.component.yml@EKExtensions
+      parameters: 
+        ServiceConnection: ${{ parameters.ServiceConnection }}
+        AppServiceName: ${{ parameters.SchedulerTriggerAppServiceName }}
+        ResourceGroupName: $(resourceGroupName)
+        ResourceGroupLocation: $(location)
+        ResourceFile: '$(Pipeline.Workspace)/resources/scheduler-template.json'
+        Package: '$(Pipeline.Workspace)/service/U4.ExtensionKit.Triggers.Scheduler.zip'
+
+- job: DeployWebhookV2Trigger
+  displayName: 'Deploy WebhookV2 Trigger'
+  ${{ if ne(parameters.Dependency, '')}}:
+    dependsOn: ${{ parameters.Dependency }} 
+  ${{ if ne(parameters.Dependency, '')}}:
+    condition: succeeded('${{ parameters.Dependency }}')  
+
+  pool: 
+    vmImage: 'ubuntu-latest'
+    
+  variables:
+  - template: DeploymentResources/Resources/Variables/vars.webhook-v2.yml@EKExtensions
+    parameters:
+      AppServiceName: "${{ parameters.WebhookTriggerAppServiceName }}"
+
+  steps:
+    - task: DownloadPipelineArtifact@2
+      displayName: 'Download resources files'
+      inputs:
+        source: 'current'
+        artifact: 'webhook-trigger-resources'
+        path: '$(Pipeline.Workspace)/resources'
+
+    - task: DownloadPipelineArtifact@2
+      displayName: 'Download services files'
+      inputs:
+        source: 'current'
+        artifact: 'webhook-trigger-service'
+        path: '$(Pipeline.Workspace)/service'
+
+    - checkout: EKExtensions
+      path: 'ExtensionKit.Extensions/webhook-trigger'
+
+    - template: DeploymentResources/Jobs/deploy.component.yml@EKExtensions
+      parameters: 
+        ServiceConnection: ${{ parameters.ServiceConnection }}
+        AppServiceName: ${{ parameters.WebhookTriggerAppServiceName }}
+        ResourceGroupName: $(resourceGroupName)
+        ResourceGroupLocation: $(location)
+        ResourceFile: '$(Pipeline.Workspace)/resources/webhook-v2-template.json'
+        Package: '$(Pipeline.Workspace)/service/U4.ExtensionKit.Triggers.Http.WebhookV2.zip'

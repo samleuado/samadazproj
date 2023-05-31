@@ -1,0 +1,56 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string"
+        },
+        "hostingPlanName": {
+            "type": "string"
+        },
+        "sku": {
+            "type": "string"
+        },
+        "skuCode": {
+            "type": "string"
+        },
+        "workerSize": {
+            "type": "string"
+        },
+        "workerSizeId": {
+            "type": "string"
+        },
+        "numberOfWorkers": {
+            "type": "string"
+        },
+        "u4costId": {
+            "type": "string"
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "apiVersion": "2021-02-01",
+            "name": "[parameters('hostingPlanName')]",
+            "type": "Microsoft.Web/serverfarms",
+            "location": "[parameters('location')]",
+            "kind": "",
+            "tags": {
+                "U4COSTID": "[parameters('u4costId')]"
+            },
+            "dependsOn": [],
+            "properties": {
+                "name": "[parameters('hostingPlanName')]",
+                "workerSize": "[parameters('workerSize')]",
+                "workerSizeId": "[parameters('workerSizeId')]",
+                "numberOfWorkers": "[parameters('numberOfWorkers')]",
+                "maximumElasticWorkerCount": 20,
+                "zoneRedundant": false
+            },
+            "sku": {
+                "Tier": "[parameters('sku')]",
+                "Name": "[parameters('skuCode')]"
+            }
+        }
+    ]
+}

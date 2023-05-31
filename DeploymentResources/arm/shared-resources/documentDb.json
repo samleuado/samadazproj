@@ -1,0 +1,205 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "resourceName": {
+      "type": "string",
+      "metadata": {
+        "description": "Extensions Kit Document DB resource name"
+      }
+    },
+
+    "documentDbConsistencyLevelName": {
+      "type": "string",
+      "defaultValue": "Session",
+      "metadata": {
+        "description": "Document DB read consystency level"
+      }
+    },
+    "documentDbConsistencyLevelMaxIntervalInSeconds": {
+      "type": "int",
+      "defaultValue": 5,
+      "metadata": {
+        "desciption": "Document DB maximum lag time"
+      }
+    },
+    "documentDbConsistencyLevelMaxStalenessPrefix": {
+      "type": "int",
+      "defaultValue": 100,
+      "metadata": {
+        "desciption": "Document DB maximum lag operations"
+      }
+    },
+    "u4costId": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "documentDbDatabaseName": {
+      "type": "string",
+      "defaultValue": "extensionskit"
+    },
+    "secondaryRegion": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Document DB secondary region for multi-region writes"
+      }
+    },
+    "addDocumentDb": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "workspaceName": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "workspaceRg": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "enableDiagnosticSettings": {
+      "type": "string",
+      "defaultValue": "no",
+      "allowedValues": [
+        "yes",
+        "no"
+      ]
+    }
+  },
+
+  "variables": {
+    "emptyArray": [],
+    "primaryLocationName": "[resourceGroup().location]",
+    "locations": [
+      {
+        "locationName": "[variables('primaryLocationName')]",
+        "failoverPriority": 0
+      }
+    ],
+    "secondaryLocation": {
+      "locationName": "[parameters('secondaryRegion')]",
+      "failoverPriority": 1
+    },
+    "workspaceId": "[resourceId(parameters('workspaceRg'), 'Microsoft.OperationalInsights/workspaces', parameters('workspaceName'))]"
+  },
+  "resources": [
+    {
+      "condition": "[equals(parameters('addDocumentDb'), 'yes')]",
+      "apiVersion": "2021-01-15",
+      "type": "Microsoft.DocumentDB/databaseAccounts",
+      "kind": "GlobalDocumentDB",
+      "name": "[parameters('resourceName')]",
+      "location": "[variables('primaryLocationName')]",
+      "tags": {
+        "U4COSTID": "[parameters('u4costId')]"
+      },
+      "scale": null,
+      "properties": {
+        "ipRangeFilter": "",
+        "enableMultipleWriteLocations": "[not(empty(parameters('secondaryRegion')))]",
+        "isVirtualNetworkFilterEnabled": false,
+        "virtualNetworkRules": [],
+        "databaseAccountOfferType": "Standard",
+        "consistencyPolicy": {
+          "defaultConsistencyLevel": "[parameters('documentDbConsistencyLevelName')]",
+          "maxIntervalInSeconds": "[parameters('documentDbConsistencyLevelMaxIntervalInSeconds')]",
+          "maxStalenessPrefix": "[parameters('documentDbConsistencyLevelMaxStalenessPrefix')]"
+        },
+        "locations": "[concat(variables('locations'), if(empty(parameters('secondaryRegion')), variables('emptyArray'), array(variables('secondaryLocation'))))]",
+        "capabilities": []
+      }
+    },
+    {
+      "condition": "[equals(parameters('enableDiagnosticSettings'), 'yes')]",
+      "type": "Microsoft.Insights/diagnosticSettings",
+      "apiVersion": "2017-05-01-preview",
+      "name": "[parameters('resourceName')]",
+      "scope": "[format('Microsoft.DocumentDB/databaseAccounts/{0}', parameters('resourceName'))]",
+      "tags": {
+        "U4COSTID": "[parameters('u4costId')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('resourceName'))]"
+      ],
+      "properties": {
+        "name": "LogAnalytics",
+        "logs": [
+          {
+            "category": "DataPlaneRequests",
+            "enabled": true,
+            "retentionPolicy": {
+              "days": 90,
+              "enabled": true
+            }
+          },
+          {
+            "category": "QueryRuntimeStatistics",
+            "enabled": true,
+            "retentionPolicy": {
+              "days": 90,
+              "enabled": true
+            }
+          },
+          {
+            "category": "PartitionKeyStatistics",
+            "enabled": true,
+            "retentionPolicy": {
+              "days": 90,
+              "enabled": true
+            }
+          },
+          {
+            "category": "PartitionKeyRUConsumption",
+            "enabled": true,
+            "retentionPolicy": {
+              "days": 90,
+              "enabled": true
+            }
+          },
+          {
+            "category": "ControlPlaneRequests",
+            "enabled": true,
+            "retentionPolicy": {
+              "days": 90,
+              "enabled": true
+            }
+          }
+        ],
+        "metrics": [
+          {
+            "category": "Requests",
+            "enabled": true,
+            "retentionPolicy": {
+              "enabled": true,
+              "days": 90
+            }
+          }
+        ],
+        "workspaceId": "[variables('workspaceId')]"
+      }
+    },
+    {
+      "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases",
+      "name": "[concat(parameters('resourceName'), '/', parameters('documentDbDatabaseName'))]",
+      "apiVersion": "2020-04-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('resourceName'))]"
+      ],
+      "properties": {
+        "resource": {
+          "id": "[parameters('documentDbDatabaseName')]"
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "documentDbUri": {
+      "type": "string",
+      "value": "[concat('https://', parameters('resourceName'), '.documents.azure.com:443')]"
+    },
+    "documentDbKey": {
+      "type": "string",
+      "value": "[listKeys(resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('resourceName')), providers('Microsoft.DocumentDB', 'databaseAccounts').apiVersions[0]).primaryMasterKey]"
+    }
+  }
+}

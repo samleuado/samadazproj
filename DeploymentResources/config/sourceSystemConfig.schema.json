@@ -1,0 +1,221 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://unit4.com/disco-dsc.schema.json",
+    "title": "People Platform Services desired state configuration",
+    "description": "configuration that should be created in people platform service",
+    "type": "object",
+    "required": [ "disco" ],
+    "properties": {
+        "dictionary": {
+            "title": "Dictionary for repeated values",
+            "description": "each property can be used farther in the document as $$property$$",
+            "type": "object"
+        },
+        "disco": {
+            "title": "DISCO configuration",
+            "description": "objects to be created in DISCO",
+            "type": "object",
+            "properties": {
+                "sourceSystemTypes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/discoSourceSystemType"
+                    },
+                    "uniqueItems": true
+                },
+                "sourceSystems": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/discoSourceSystem"
+                    },
+                    "uniqueItems": true
+                }
+            }
+        }
+    },
+    "definitions": {
+        "discoSourceSystemType": {
+            "type": "object",
+            "required": ["code", "deploymentType", "validServiceTypes"],
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "deploymentType": {
+                    "type": "string",
+                    "enum": [
+                        "Global",
+                        "Regional",
+                        "RegionalStamp"
+                    ]
+                },
+                "documentationUri": {
+                    "type": "string",
+                    "format": "uri"
+                },
+                "pipelineUri": {
+                    "type": "string",
+                    "format": "uri"
+                },
+                "validServiceTypes": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "discoSourceSystem": {
+            "type": "object",
+            "required": ["name", "type", "stage", "dependencies", "services"],
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "stage": {
+                    "type": "string"
+                },
+                "region": {
+                    "type": "string"
+                },
+                "stamp": {
+                    "type": "string"
+                },
+                "version": {
+                    "type": "string"
+                },
+                "costId": {
+                    "type": "string"
+                },
+                "adminAccess": {
+                    "type": "object",
+                    "required": ["keyVaultName", "clientIdSecret", "clientSecretSecret"],
+                    "properties": {
+                        "keyVaultName": {
+                            "type": "string",
+                            "default": ""
+                        },
+                        "clientIdSecret": {
+                            "type": "string",
+                            "default": ""
+                        },
+                        "clientSecretSecret": {
+                            "type": "string",
+                            "default": ""
+                        },
+                        "scope": {
+                            "type": "string",
+                            "default": ""
+                        }
+                    }
+                },
+                "activationFunction": {
+                    "type": "object",
+                    "required": ["type", "configuration"],
+                    "properties": {
+                        "type": {
+                            "type": "string",
+                            "default": ""
+                        },
+                        "configuration": {
+                            "type": "string",
+                            "default": ""
+                        }
+                    }
+                },
+                "dependencies": {
+                    "type": "array",
+                    "default": [],
+                    "uniqueItems": true,
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "activationParameters": {
+                    "type": "array",
+                    "default": [],
+                    "items": {
+                        "type": "object",
+                        "required": ["name", "dataType", "label", "items"],
+                        "properties": {
+                            "name": {
+                                "type": "string"
+                            },
+                            "dataType": {
+                                "type": "string"
+                            },
+                            "label": {
+                                "type": "string"
+                            },
+                            "configuration": {
+                                "type": "string",
+                                "default": ""
+                            },
+                            "items": {
+                                "type": "array",
+                                "default": [],
+                                "items": {
+                                    "type": "object",
+                                    "required": ["value", "description"],
+                                    "properties": {
+                                        "value": {
+                                            "type": "string"
+                                        },
+                                        "description": {
+                                            "type": "string"
+                                        }          
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "services": {
+                    "type": "array",
+                    "default": [],
+                    "items": {
+                        "type": "object",
+                        "required": ["name", "type", "url"],
+                        "properties": {
+                            "name": {
+                                "type": "string"
+                            },
+                            "type": {
+                                "type": "string"
+                            },
+                            "url": {
+                                "type": "string",
+                                "format": "uri"
+                            },
+                            "healthCheck": {
+                                "type": "string",
+                                "default": ""
+                            },
+                            "version": {
+                                "type": "string",
+                                "default": ""
+                            },
+                            "capabilities": {
+                                "type": "array",
+                                "default": [],
+                                "uniqueItems": true,
+                                "items": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
